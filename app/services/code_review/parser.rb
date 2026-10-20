@@ -8,6 +8,9 @@ module CodeReview
     # Models often wrap JSON in ```json fences even when asked not to.
     CODE_FENCE = /\A\s*```(?:json)?\s*\n?(.*?)\n?```\s*\z/m
 
+    # AI text ends up on a page, so cap it rather than trust its length.
+    MAX_TEXT_LENGTH = 2_000
+
     def self.parse(raw, code:)
       new(code).parse(raw)
     end
@@ -24,7 +27,7 @@ module CodeReview
       complexity = data["complexity"].is_a?(Hash) ? data["complexity"] : {}
 
       Review.new(
-        summary: summary.strip,
+        summary: limit(summary),
         time_complexity: complexity["time"],
         space_complexity: complexity["space"],
         suggestions: Array(data["suggestions"]).filter_map { |s| build_suggestion(s) }
@@ -54,7 +57,11 @@ module CodeReview
       return unless message.is_a?(String) && message.strip.present?
 
       line_start, line_end = line_range(item["line_start"], item["line_end"])
-      Suggestion.new(category: item["category"], line_start:, line_end:, message: message.strip)
+      Suggestion.new(category: item["category"], line_start:, line_end:, message: limit(message))
+    end
+
+    def limit(text)
+      text.strip.truncate(MAX_TEXT_LENGTH)
     end
 
     # Keeps the AI's line numbers inside the submitted code. A start line

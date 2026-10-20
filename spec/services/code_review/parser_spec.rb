@@ -40,6 +40,21 @@ RSpec.describe CodeReview::Parser do
     end
   end
 
+  describe "text length limits" do
+    it "shortens an overly long summary" do
+      review = parse(valid_payload.merge(summary: "x" * 10_000))
+
+      expect(review.summary.length).to be <= 2_000
+    end
+
+    it "shortens an overly long suggestion message" do
+      long = { category: "correctness", line_start: 1, message: "y" * 10_000 }
+      review = parse(valid_payload.merge(suggestions: [ long ]))
+
+      expect(review.suggestions.first.message.length).to be <= 2_000
+    end
+  end
+
   describe "an unusable response" do
     it "raises InvalidResponse for non-JSON text" do
       expect { parse("Sorry, I can't help with that.") }

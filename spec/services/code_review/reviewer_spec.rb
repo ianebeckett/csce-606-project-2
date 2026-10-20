@@ -32,6 +32,22 @@ RSpec.describe CodeReview::Reviewer do
     expect(client.last_prompt).to include("2 |   a - b")
   end
 
+  it "fences the code in a delimiter the submission cannot predict" do
+    review
+    first = client.last_prompt[/<(submission-\h+)>/, 1]
+    review
+    second = client.last_prompt[/<(submission-\h+)>/, 1]
+
+    expect(first).not_to eq(second)
+    expect(client.last_prompt).to match(%r{<#{second}>\n.*a - b.*\n</#{second}>}m)
+  end
+
+  it "tells the AI to treat the submission as data, not instructions" do
+    review
+
+    expect(client.last_system).to match(/untrusted/i)
+  end
+
   it "sends the problem, language, and judge result" do
     review
 
