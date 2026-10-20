@@ -1,0 +1,54 @@
+name: Message checks
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  pull-requests: read
+
+concurrency:
+  group: messages-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  messages:
+    name: Commit and PR messages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const errors = [];
+            const checkSubject = (subject, label) => {
+              if (!/^\p{Lu}/u.test(subject) || [...subject].length > 50 || subject.endsWith('.')) {
+                errors.push(`${label}: use a capitalized subject of at most 50 characters, without a final period.`);
+              }
+            };
+            checkSubject(pr.title, 'PR title');
+            const body = (pr.body || '').replace(/<!--[^]*?(?:-->|$)/g, '');
+            const sections = new Map(body.split(/^## /m).slice(1).map(section => {
+              const [heading, ...lines] = section.split('\n');
+              return [heading.trim(), lines.join('\n').trim()];
+            }));
+            for (const section of ['Why', 'How', 'Data flow', 'Test']) {
+              const content = sections.get(section);
+              if (!content || !/[\p{L}\p{N}]/u.test(content) || /^(TODO|TBD|N\/A)[.!]?$/i.test(content)) {
+                errors.push(`PR description: fill in the ${section} section.`);
+              }
+            }
+            const commits = await github.paginate(github.rest.pulls.listCommits, {
+              ...context.repo, pull_number: pr.number, per_page: 100
+            });
+            if (commits.length !== pr.commits) errors.push('Could not check every PR commit.');
+            for (const {sha, commit} of commits) {
+              const [subject, separator, ...lines] = commit.message.replace(/\r\n/g, '\n').split('\n');
+              const label = sha.slice(0, 7);
+              checkSubject(subject, label);
+              if (separator !== '' || !lines.join('\n').trim()) {
+                errors.push(`${label}: include a blank line after the subject and a body explaining what and why.`);
+              }
+              if (lines.some(line => [...line].length > 72)) errors.push(`${label}: wrap body lines at 72 characters.`);
+            }
+            if (errors.length) core.setFailed(errors.join('\n'));

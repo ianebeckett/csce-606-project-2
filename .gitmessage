@@ -1,0 +1,24 @@
+
+
+
+# Code Coach commit message — write above these reminders.
+#
+# SUBJECT (first line, at most 50 characters)
+# Summarize what changed. Start with a capitalized imperative verb:
+# Add, Fix, Update, Remove, Refactor, Document, or Test.
+# Do not end with a period. Leave one blank line before the body.
+#
+# BODY (required, wrap at 72 characters)
+# Explain what changed and why it was needed, rather than how it works.
+# Make the change type clear: feature, fix, refactor, docs, tests, etc.
+# Cover the changes across all affected files without repeating the diff.
+# Keep the explanation logical, complete, concise, and grammatical.
+#
+# Example only:
+# Document contributor message conventions
+#
+# Add commit and PR templates to remind contributors to explain each
+# change and its motivation, making the work easier for teammates to review.
+#
+# CI checks message formatting. Git's default cleanup removes these
+# reminders from editor-based commit messages.

@@ -22,3 +22,7 @@ Things you may want to cover:
 * Deployment instructions
 
 * ...
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for PR and commit-message guidelines.
