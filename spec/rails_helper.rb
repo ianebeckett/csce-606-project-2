@@ -12,6 +12,7 @@ ActiveModel::SecurePassword.min_cost = true
 Judge::DockerRunner.prepend(DockerCoverage::Runner) if defined?(DockerCoverage)
 
 RSpec.configure do |config|
+  config.fail_if_no_examples = true
   config.use_transactional_fixtures = true
   config.include JudgeHelpers
   config.order = :random

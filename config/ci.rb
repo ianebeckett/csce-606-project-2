@@ -1,11 +1,11 @@
 CI.run do
   step "Setup", "bin/setup --skip-server"
 
-  step "Tests: RSpec", "COVERAGE=1 bundle exec rspec"
-  step "Tests: Cucumber", "COVERAGE=1 bundle exec cucumber"
-  step "Tests: Total coverage", "bundle exec ruby test_support/merge_coverage.rb"
+  step "Quality: Gate regression tests", "bundle exec rspec --options /dev/null .github/spec"
+  step "Quality: Prepare test database", "env RAILS_ENV=test bin/rails db:prepare"
+  step "Quality: Tests and coverage", "bin/quality"
 
-  step "Style: Ruby", "bin/rubocop"
+  step "Style: Ruby", "bin/rubocop --fail-level info . bin/quality .github/scripts .github/spec"
 
   step "Security: Gem audit", "bin/bundler-audit"
   step "Security: Importmap vulnerability audit", "bin/importmap audit"
