@@ -10,4 +10,8 @@ class User < ApplicationRecord
   validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :password, length: { minimum: MINIMUM_PASSWORD_LENGTH }, allow_nil: true
   validates :role, inclusion: { in: ROLES }
+
+  def premium?
+    role == "Premium"
+  end
 end

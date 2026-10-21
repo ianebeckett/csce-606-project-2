@@ -8,4 +8,10 @@
   <% if @attempt.error_message.present? %><pre class="error-detail"><%= @attempt.error_message %></pre><% end %>
 </div>
 <h2>Submitted Ruby code</h2><pre class="saved-code"><code><%= @attempt.code %></code></pre>
-<%= link_to "Try this problem again", problem_path(@attempt.problem), class: "button" %>
+<% unless current_user.premium? %><p class="muted">AI code review is available to Premium members.</p><% end %>
+<div class="attempt-actions">
+  <% if current_user.premium? %>
+    <%= button_to "Get AI code review", attempt_code_review_path(@attempt), class: "button" %>
+  <% end %>
+  <%= link_to "Try this problem again", problem_path(@attempt.problem), class: "button" %>
+</div>
