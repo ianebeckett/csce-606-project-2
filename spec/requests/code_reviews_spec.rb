@@ -78,6 +78,15 @@ RSpec.describe "AI code review requests", type: :request do
       expect(flash[:alert]).to include("AI code review is unavailable right now")
     end
 
+    it "explains instead of erroring when the AI reply is not valid UTF-8" do
+      use_ai_client(Ai::FakeClient.new(reply: "{\"summary\": \"\xFF\"}".dup.force_encoding("UTF-8")))
+
+      post attempt_code_review_path(attempt)
+
+      expect(response).to redirect_to(attempt_path(attempt))
+      expect(flash[:alert]).to include("AI code review is unavailable right now")
+    end
+
     it "explains when no AI provider is configured" do
       post attempt_code_review_path(attempt)
 

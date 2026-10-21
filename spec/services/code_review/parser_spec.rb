@@ -47,6 +47,12 @@ RSpec.describe CodeReview::Parser do
       expect(review.summary.length).to be <= 2_000
     end
 
+    it "shortens an overly long complexity" do
+      review = parse(valid_payload.merge(complexity: { time: "O(#{"n" * 10_000})", space: "O(1)" }))
+
+      expect(review.time_complexity.length).to be <= 2_000
+    end
+
     it "shortens an overly long suggestion message" do
       long = { category: "correctness", line_start: 1, message: "y" * 10_000 }
       review = parse(valid_payload.merge(suggestions: [ long ]))
@@ -64,6 +70,12 @@ RSpec.describe CodeReview::Parser do
     it "raises InvalidResponse when the summary is missing" do
       expect { parse(valid_payload.except(:summary)) }
         .to raise_error(CodeReview::InvalidResponse)
+    end
+
+    it "raises InvalidResponse for a reply that is not valid UTF-8" do
+      reply = "{\"summary\": \"bad \xFF byte\"}".dup.force_encoding("UTF-8")
+
+      expect { parse(reply) }.to raise_error(CodeReview::InvalidResponse)
     end
 
     it "raises InvalidResponse when the JSON is not an object" do
@@ -119,6 +131,30 @@ RSpec.describe CodeReview::Parser do
       suggestion = suggestions_for({ category: "correctness", line_start: 3, line_end: 1, message: "x" }).first
 
       expect([ suggestion.line_start, suggestion.line_end ]).to eq([ 1, 3 ])
+    end
+
+    it "ignores a complexity that is not text" do
+      review = parse(valid_payload.merge(complexity: { time: [ 1, 2 ], space: { big: "O" } }))
+
+      expect([ review.time_complexity, review.space_complexity ]).to eq([ nil, nil ])
+    end
+
+    it "treats a fractional start line as a general comment" do
+      suggestion = suggestions_for({ category: "correctness", line_start: 2.9, message: "x" }).first
+
+      expect([ suggestion.line_start, suggestion.line_end ]).to eq([ nil, nil ])
+    end
+
+    it "treats a fractional end line as a general comment" do
+      suggestion = suggestions_for({ category: "correctness", line_start: 1, line_end: 2.5, message: "x" }).first
+
+      expect([ suggestion.line_start, suggestion.line_end ]).to eq([ nil, nil ])
+    end
+
+    it "accepts whole-number floats and numeric strings as line numbers" do
+      suggestion = suggestions_for({ category: "correctness", line_start: 2.0, line_end: "3", message: "x" }).first
+
+      expect([ suggestion.line_start, suggestion.line_end ]).to eq([ 2, 3 ])
     end
 
     it "treats a missing suggestions list as no suggestions" do

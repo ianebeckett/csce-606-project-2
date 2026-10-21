@@ -28,8 +28,8 @@ module CodeReview
 
       Review.new(
         summary: limit(summary),
-        time_complexity: complexity["time"],
-        space_complexity: complexity["space"],
+        time_complexity: optional_text(complexity["time"]),
+        space_complexity: optional_text(complexity["space"]),
         suggestions: Array(data["suggestions"]).filter_map { |s| build_suggestion(s) }
       )
     end
@@ -38,6 +38,10 @@ module CodeReview
 
     def decode(raw)
       text = raw.to_s
+      # Matching a regex against invalid UTF-8 raises ArgumentError, which
+      # callers don't rescue, so reject it as an unusable reply first.
+      raise InvalidResponse, "response is not valid UTF-8" unless text.valid_encoding?
+
       text = Regexp.last_match(1) if text =~ CODE_FENCE
       data = JSON.parse(text)
       raise InvalidResponse, "expected a JSON object" unless data.is_a?(Hash)
@@ -64,15 +68,30 @@ module CodeReview
       text.strip.truncate(MAX_TEXT_LENGTH)
     end
 
+    def optional_text(value)
+      limit(value) if value.is_a?(String) && value.strip.present?
+    end
+
     # Keeps the AI's line numbers inside the submitted code. A start line
     # that doesn't exist becomes a general comment ([nil, nil]).
     def line_range(start, finish)
-      start = Integer(start, exception: false)
+      start = line_number(start)
       return [ nil, nil ] if start.nil? || start < 1 || start > @line_count
 
-      finish = Integer(finish, exception: false) || start
+      finish = finish.nil? ? start : line_number(finish)
+      return [ nil, nil ] if finish.nil?
+
       start, finish = finish, start if finish < start
       [ start.clamp(1, @line_count), finish.clamp(1, @line_count) ]
+    end
+
+    # Integer() truncates floats (2.9 becomes 2), which would attach the
+    # advice to the wrong line, so only whole numbers count.
+    def line_number(value)
+      return value.to_i if value.is_a?(Float) && value.finite? && value == value.floor
+      return if value.is_a?(Float)
+
+      Integer(value, exception: false)
     end
   end
 end
