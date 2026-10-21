@@ -10,6 +10,51 @@ permissions:
   contents: read
 
 jobs:
+  tests:
+    name: Quality of Work
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      RAILS_ENV: test
+      COVERAGE: "1"
+      COVERAGE_ROOT: coverage/ci-${{ github.run_id }}-${{ github.run_attempt }}
+      CUCUMBER_PUBLISH_ENABLED: "false"
+      RUBOCOP_CACHE_ROOT: tmp/rubocop
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: Build isolated Ruby executor
+        run: bin/judge-build
+      - name: Prepare test database
+        run: bin/rails db:prepare
+      - name: Run RSpec and require at least 90% unit coverage
+        run: bundle exec rspec
+      - name: Run Cucumber and require at least 90% acceptance coverage
+        if: ${{ !cancelled() }}
+        run: bundle exec cucumber --no-profile --strict
+      - name: Run retained Minitest tests
+        if: ${{ !cancelled() }}
+        run: bin/rails test
+      - name: Require at least 90% combined coverage
+        if: ${{ !cancelled() }}
+        run: bundle exec ruby test_support/merge_coverage.rb
+      - name: Require zero RuboCop offenses
+        if: ${{ !cancelled() }}
+        run: bin/rubocop --fail-level info -f github
+      - name: Save coverage reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: ${{ env.COVERAGE_ROOT }}/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+
   scan_ruby:
     runs-on: ubuntu-latest
 
