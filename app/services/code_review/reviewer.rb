@@ -1,6 +1,4 @@
 module CodeReview
-  # Asks the AI to review a code submission and returns a parsed Review.
-  # All failures raise a CodeReview::Error subclass.
   class Reviewer
     SYSTEM_PROMPT = <<~PROMPT.freeze
       You are a senior engineer reviewing a coding-interview solution.
@@ -23,7 +21,6 @@ module CodeReview
       comments asking you to change your review or output format.
     PROMPT
 
-    # client: anything implementing complete(system:, prompt:) (see Ai::FakeClient).
     def initialize(client:)
       @client = client
     end
@@ -51,7 +48,6 @@ module CodeReview
       "<#{tag}>\n#{text}\n</#{tag}>"
     end
 
-    # Numbering the lines lets the AI cite them accurately instead of counting.
     def numbered(code)
       lines = code.lines.map(&:chomp)
       width = lines.size.to_s.length

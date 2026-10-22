@@ -1,7 +1,4 @@
 module Ai
-  # Stand-in AI provider for tests and local development. Real clients
-  # follow the same contract: complete(system:, prompt:) returns the reply
-  # text, or raises Ai::Error on failure.
   class FakeClient
     attr_reader :last_system, :last_prompt
 

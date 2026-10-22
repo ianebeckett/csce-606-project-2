@@ -10,8 +10,6 @@ module CodeReviewsHelper
     CATEGORY_LABELS.fetch(suggestion.category)
   end
 
-  # Suggestions keyed by the line they end on, so each one can be shown
-  # directly under the code it refers to.
   def suggestions_by_line(review)
     review.suggestions.select(&:line_end).group_by(&:line_end)
   end

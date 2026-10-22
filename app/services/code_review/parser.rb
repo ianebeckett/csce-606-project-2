@@ -1,14 +1,10 @@
 module CodeReview
-  # Turns the AI's raw JSON reply into a Review. Strict about what the
-  # review needs (valid JSON, a summary); forgiving about the rest, since
-  # AI output is unreliable.
   class Parser
     CATEGORIES = %w[correctness complexity edge_case anti_pattern].freeze
 
     # Models often wrap JSON in ```json fences even when asked not to.
     CODE_FENCE = /\A\s*```(?:json)?\s*\n?(.*?)\n?```\s*\z/m
 
-    # AI text ends up on a page, so cap it rather than trust its length.
     MAX_TEXT_LENGTH = 2_000
 
     def self.parse(raw, code:)
@@ -48,9 +44,8 @@ module CodeReview
       raise InvalidResponse, "response is not valid JSON: #{e.message}"
     end
 
-    # Regex and JSON work need UTF-8. Binary-tagged bytes are read as UTF-8,
-    # other encodings (e.g. UTF-16) are converted, and anything that still
-    # isn't valid UTF-8 is an unusable reply rather than an uncaught error.
+    # Regex and JSON need UTF-8, and valid_encoding? alone trusts the declared
+    # encoding, so binary is read as UTF-8 and anything else is converted.
     def utf8(text)
       text = text.encoding == Encoding::BINARY ? text.dup.force_encoding(Encoding::UTF_8) : text.encode(Encoding::UTF_8)
       raise InvalidResponse, "response is not valid UTF-8" unless text.valid_encoding?
@@ -60,8 +55,6 @@ module CodeReview
       raise InvalidResponse, "response encoding could not be read: #{e.message}"
     end
 
-    # Returns nil for an invalid suggestion so one bad item doesn't
-    # discard the whole review.
     def build_suggestion(item)
       return unless item.is_a?(Hash)
       return unless CATEGORIES.include?(item["category"])
@@ -81,8 +74,6 @@ module CodeReview
       limit(value) if value.is_a?(String) && value.strip.present?
     end
 
-    # Keeps the AI's line numbers inside the submitted code. A start line
-    # that doesn't exist becomes a general comment ([nil, nil]).
     def line_range(start, finish)
       start = line_number(start)
       return [ nil, nil ] if start.nil? || start < 1 || start > @line_count
