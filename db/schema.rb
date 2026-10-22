@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_20_181158) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_22_184753) do
   create_table "attempts", force: :cascade do |t|
     t.integer "practice_session_id", null: false
     t.text "code", null: false
@@ -24,6 +24,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_181158) do
     t.index ["practice_session_id"], name: "index_attempts_on_practice_session_id"
     t.check_constraint "language = 'ruby'", name: "attempts_ruby_only"
     t.check_constraint "passed_cases >= 0 AND total_cases >= passed_cases", name: "attempts_case_counts"
+  end
+
+  create_table "delayed_jobs", force: :cascade do |t|
+    t.integer "priority", default: 0, null: false
+    t.integer "attempts", default: 0, null: false
+    t.text "handler", null: false
+    t.text "last_error"
+    t.datetime "run_at"
+    t.datetime "locked_at"
+    t.datetime "failed_at"
+    t.string "locked_by"
+    t.string "queue"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.index ["priority", "run_at"], name: "delayed_jobs_priority"
   end
 
   create_table "practice_sessions", force: :cascade do |t|

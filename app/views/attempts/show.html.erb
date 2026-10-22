@@ -3,6 +3,7 @@
 <p class="eyebrow">SUBMISSION #<%= @attempt.id %></p><h1><%= @attempt.problem.title %></h1>
 <div class="result-card" role="status">
   <h2><%= @attempt.judge_result %></h2>
+  <% if @attempt.judge_result == Attempt::PENDING %><p><%= link_to "Refresh result", attempt_path(@attempt) %></p><% end %>
   <p class="case-count"><%= @attempt.passed_cases %> / <%= @attempt.total_cases %> test cases passed</p>
   <p class="muted">Language: Ruby · <%= @attempt.created_at.strftime(ApplicationHelper::SUBMISSION_TIME_FORMAT) %></p>
   <% if @attempt.error_message.present? %><pre class="error-detail"><%= @attempt.error_message %></pre><% end %>

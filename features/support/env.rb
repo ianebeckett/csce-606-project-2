@@ -6,6 +6,7 @@ require "cucumber/rails"
 require "rspec/expectations"
 require "database_cleaner/active_record"
 require "active_support/testing/time_helpers"
+require "active_job/test_helper"
 require_relative "../../spec/support/judge_helpers"
 require_relative "../../spec/fixtures/ruby_solutions"
 
@@ -16,6 +17,10 @@ Judge::DockerRunner.prepend(DockerCoverage::Runner) if defined?(DockerCoverage)
 Capybara.app = Rails.application
 Capybara.default_driver = :rack_test
 DatabaseCleaner.strategy = :transaction
-World(JudgeHelpers, RSpec::Matchers, ActiveSupport::Testing::TimeHelpers)
+World(JudgeHelpers, RSpec::Matchers, ActiveJob::TestHelper, ActiveSupport::Testing::TimeHelpers)
 
-After { travel_back }
+After do
+  clear_enqueued_jobs
+  clear_performed_jobs
+  travel_back
+end

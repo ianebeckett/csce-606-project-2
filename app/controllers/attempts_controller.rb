@@ -19,11 +19,27 @@ class AttemptsController < ApplicationController
     end
 
     @attempt.practice_session = current_user.practice_sessions.for_today(@problem)
-    if @attempt.save
-      Judge::Submission.new.call(@attempt)
-      redirect_to attempt_path(@attempt)
-    else
-      render "problems/show", status: :unprocessable_content
+    @attempt.total_cases = @problem.test_cases.size
+    Attempt.transaction do
+      if @attempt.save
+        enqueue_judging
+        redirect_to attempt_path(@attempt)
+      else
+        render "problems/show", status: :unprocessable_content
+      end
+    end
+  end
+
+  private
+
+  def enqueue_judging
+    begin
+      enqueued = JudgeSubmissionJob.perform_later(@attempt)
+    rescue ActiveRecord::ActiveRecordError => error
+      Rails.error.report(error)
+    end
+    unless enqueued
+      @attempt.update!(judge_result: Attempt::JUDGE_UNAVAILABLE, error_message: Judge::DockerRunner::UNAVAILABLE_MESSAGE)
     end
   end
 end

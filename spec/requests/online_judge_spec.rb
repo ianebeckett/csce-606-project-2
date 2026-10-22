@@ -1,6 +1,7 @@
 require "rails_helper"
 
 RSpec.describe "Online Judge requests", type: :request do
+  include ActiveJob::TestHelper
   include ActiveSupport::Testing::TimeHelpers
 
   before { seed_judge }
@@ -73,7 +74,7 @@ RSpec.describe "Online Judge requests", type: :request do
     expect(response.body).not_to include(problem.starter_code)
   end
 
-  it "saves Judge Unavailable when the judge process cannot start" do
+  it "queues judging and preserves infrastructure failures" do
     sign_in(user)
     problem = Problem.find_by!(slug: "contains-duplicate")
     command = instance_double(Judge::Command)
@@ -84,14 +85,45 @@ RSpec.describe "Online Judge requests", type: :request do
       post problem_attempts_path(problem), params: {
         attempt: { code: RubySolutions::CORRECT.fetch(problem.slug), language: "ruby" }
       }
-    end.to change(Attempt, :count).by(1)
+    end.to change(Attempt, :count).by(1).and change { enqueued_jobs.size }.by(1)
 
     attempt = Attempt.order(:id).last
     expect(response).to redirect_to(attempt_path(attempt))
+    expect(attempt.judge_result).to eq("Pending")
+    expect(attempt.total_cases).to eq(6)
+    follow_redirect!
+    expect(response.body).to include("Pending")
+    expect(response.body).to include("Refresh result")
+    expect(response.body).not_to include('http-equiv="refresh"')
+
+    perform_enqueued_jobs
+
     expect(attempt.reload.judge_result).to eq("Judge Unavailable")
     expect(attempt.error_message).to eq("The Ruby judge is unavailable. Your code was saved; please try again later.")
-    follow_redirect!
+    get attempt_path(attempt)
     expect(response.body).to include("Judge Unavailable")
+    expect(response.body).not_to include("Refresh result")
+  end
+
+  it "keeps the submission when enqueueing fails" do
+    sign_in(user)
+    problem = Problem.first
+    code = RubySolutions::CORRECT.fetch(problem.slug)
+    [ ActiveJob::EnqueueError, ActiveRecord::ActiveRecordError ].each do |error_class|
+      error = error_class.new("queue unavailable")
+      allow(JudgeSubmissionJob.queue_adapter).to receive(:enqueue).and_raise(error)
+      expect(Rails.error).to receive(:report).with(error) if error.is_a?(ActiveRecord::ActiveRecordError)
+
+      expect do
+        post problem_attempts_path(problem), params: { attempt: { code: code, language: "ruby" } }
+      end.to change(Attempt, :count).by(1)
+
+      attempt = Attempt.order(:id).last
+      expect(response).to redirect_to(attempt_path(attempt))
+      expect(attempt).to have_attributes(code: code, judge_result: "Judge Unavailable", total_cases: 6)
+      follow_redirect!
+      expect(response.body).to include("Your code was saved; please try again later.")
+    end
   end
 
   it "shows submission times in the application time zone" do

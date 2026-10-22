@@ -14,6 +14,8 @@ Feature: US7 — Online Judge & Error Recovery
   Scenario Outline: Solve a real problem using Ruby without JavaScript
     Given I am signed in as a "<role>" member
     When I submit a correct Ruby solution for "<slug>"
+    Then I first see a "Pending" result
+    When judging finishes
     Then I see an "Accepted" result with every predefined case passed
     And my submitted code is preserved in my personal history
     Examples:
@@ -28,6 +30,8 @@ Feature: US7 — Online Judge & Error Recovery
   Scenario Outline: Recover from a Ruby submission failure
     Given I am signed in as a "Free" member
     When I submit a Ruby solution with "<failure>"
+    Then I first see a "Pending" result
+    When judging finishes
     Then I see the "<verdict>" verdict and a passed-case count
     And I can still open the problem and read my submitted code
     Examples:
