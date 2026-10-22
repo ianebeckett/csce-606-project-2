@@ -61,6 +61,16 @@ RSpec.describe CodeReview::Parser do
     end
   end
 
+  describe "reply encodings" do
+    it "accepts valid UTF-8 bytes tagged as binary" do
+      expect(parse(valid_payload.to_json.b).summary).to eq("Brute force works but is quadratic.")
+    end
+
+    it "accepts a reply encoded as UTF-16" do
+      expect(parse(valid_payload.to_json.encode("UTF-16LE")).summary).to eq("Brute force works but is quadratic.")
+    end
+  end
+
   describe "an unusable response" do
     it "raises InvalidResponse for non-JSON text" do
       expect { parse("Sorry, I can't help with that.") }
@@ -76,6 +86,20 @@ RSpec.describe CodeReview::Parser do
       reply = "{\"summary\": \"bad \xFF byte\"}".dup.force_encoding("UTF-8")
 
       expect { parse(reply) }.to raise_error(CodeReview::InvalidResponse)
+    end
+
+    it "raises InvalidResponse for invalid UTF-8 bytes tagged as binary" do
+      expect { parse("{\"summary\": \"\xFF\"}".b) }.to raise_error(CodeReview::InvalidResponse)
+    end
+
+    it "raises InvalidResponse for a reply that cannot be converted to UTF-8" do
+      lone_surrogate = "\x00\xD8".dup.force_encoding("UTF-16LE")
+
+      expect { parse(lone_surrogate) }.to raise_error(CodeReview::InvalidResponse, /encoding/)
+    end
+
+    it "raises InvalidResponse when the summary is blank after trimming" do
+      expect { parse(valid_payload.merge(summary: "\u0000")) }.to raise_error(CodeReview::InvalidResponse)
     end
 
     it "raises InvalidResponse when the JSON is not an object" do
@@ -155,6 +179,13 @@ RSpec.describe CodeReview::Parser do
       suggestion = suggestions_for({ category: "correctness", line_start: 2.0, line_end: "3", message: "x" }).first
 
       expect([ suggestion.line_start, suggestion.line_end ]).to eq([ 2, 3 ])
+    end
+
+    it "reads a zero-padded line number string as decimal" do
+      twelve_lines = (1..12).map { |n| "line #{n}\n" }.join
+      reply = valid_payload.merge(suggestions: [ { category: "correctness", line_start: "010", message: "x" } ]).to_json
+
+      expect(described_class.parse(reply, code: twelve_lines).suggestions.first.line_start).to eq(10)
     end
 
     it "treats a missing suggestions list as no suggestions" do

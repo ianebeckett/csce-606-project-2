@@ -27,6 +27,15 @@ RSpec.describe "AI code review requests", type: :request do
       expect(body.index("Use a Set to make this O(n).")).to be < body.index("<code>end</code>")
     end
 
+    it "labels a suggestion that spans several lines with its range" do
+      span = { category: "correctness", line_start: 1, line_end: 3, message: "Return early when nums is empty." }
+      use_ai_client(Ai::FakeClient.new(reply: ai_review_reply(suggestions: [ span ])))
+
+      post attempt_code_review_path(attempt)
+
+      expect(response.body).to include("Lines 1–3")
+    end
+
     it "lists suggestions without a line separately" do
       general = { category: "anti_pattern", message: "Name the block variables clearly." }
       use_ai_client(Ai::FakeClient.new(reply: ai_review_reply(suggestions: [ general ])))
@@ -85,6 +94,24 @@ RSpec.describe "AI code review requests", type: :request do
 
       expect(response).to redirect_to(attempt_path(attempt))
       expect(flash[:alert]).to include("AI code review is unavailable right now")
+    end
+
+    it "explains instead of erroring when the AI reply is binary with invalid bytes" do
+      use_ai_client(Ai::FakeClient.new(reply: "{\"summary\": \"\xFF\"}".b))
+
+      post attempt_code_review_path(attempt)
+
+      expect(response).to redirect_to(attempt_path(attempt))
+      expect(flash[:alert]).to include("AI code review is unavailable right now")
+    end
+
+    it "shows the review when the AI reply is encoded as UTF-16" do
+      use_ai_client(Ai::FakeClient.new(reply: ai_review_reply.encode("UTF-16LE")))
+
+      post attempt_code_review_path(attempt)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Correct, but the nested scan is quadratic.")
     end
 
     it "explains when no AI provider is configured" do

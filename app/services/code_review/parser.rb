@@ -21,13 +21,14 @@ module CodeReview
 
     def parse(raw)
       data = decode(raw)
-      summary = data["summary"]
-      raise InvalidResponse, "missing summary" unless summary.is_a?(String) && summary.present?
+      # Check after trimming: a value like "\u0000" is present but trims to "".
+      summary = optional_text(data["summary"])
+      raise InvalidResponse, "missing summary" if summary.blank?
 
       complexity = data["complexity"].is_a?(Hash) ? data["complexity"] : {}
 
       Review.new(
-        summary: limit(summary),
+        summary: summary,
         time_complexity: optional_text(complexity["time"]),
         space_complexity: optional_text(complexity["space"]),
         suggestions: Array(data["suggestions"]).filter_map { |s| build_suggestion(s) }
@@ -37,11 +38,7 @@ module CodeReview
     private
 
     def decode(raw)
-      text = raw.to_s
-      # Matching a regex against invalid UTF-8 raises ArgumentError, which
-      # callers don't rescue, so reject it as an unusable reply first.
-      raise InvalidResponse, "response is not valid UTF-8" unless text.valid_encoding?
-
+      text = utf8(raw.to_s)
       text = Regexp.last_match(1) if text =~ CODE_FENCE
       data = JSON.parse(text)
       raise InvalidResponse, "expected a JSON object" unless data.is_a?(Hash)
@@ -49,6 +46,18 @@ module CodeReview
       data
     rescue JSON::ParserError => e
       raise InvalidResponse, "response is not valid JSON: #{e.message}"
+    end
+
+    # Regex and JSON work need UTF-8. Binary-tagged bytes are read as UTF-8,
+    # other encodings (e.g. UTF-16) are converted, and anything that still
+    # isn't valid UTF-8 is an unusable reply rather than an uncaught error.
+    def utf8(text)
+      text = text.encoding == Encoding::BINARY ? text.dup.force_encoding(Encoding::UTF_8) : text.encode(Encoding::UTF_8)
+      raise InvalidResponse, "response is not valid UTF-8" unless text.valid_encoding?
+
+      text
+    rescue EncodingError => e
+      raise InvalidResponse, "response encoding could not be read: #{e.message}"
     end
 
     # Returns nil for an invalid suggestion so one bad item doesn't
@@ -91,7 +100,8 @@ module CodeReview
       return value.to_i if value.is_a?(Float) && value.finite? && value == value.floor
       return if value.is_a?(Float)
 
-      Integer(value, exception: false)
+      # Base 10, or Ruby reads "010" as octal 8 and "0x10" as 16.
+      value.is_a?(String) ? Integer(value, 10, exception: false) : Integer(value, exception: false)
     end
   end
 end
