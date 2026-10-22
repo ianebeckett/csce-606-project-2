@@ -42,6 +42,6 @@ RSpec.describe TopicPrerequisite do
   it "removes incoming and outgoing links when an empty topic is deleted" do
     described_class.create!(topic: second, prerequisite_topic: first)
     described_class.create!(topic: third, prerequisite_topic: second)
-    expect { second.destroy! }.to change(described_class, :count).from(2).to(0)
+    expect { second.destroy! }.to change(described_class, :count).by(-2)
   end
 end
