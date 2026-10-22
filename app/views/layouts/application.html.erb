@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <title><%= content_for(:title) || "Codecoach" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -11,19 +11,33 @@
 
     <%= yield :head %>
 
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app %>
-    <%= javascript_importmap_tags %>
   </head>
 
   <body>
-    <%= yield %>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header">
+      <%= link_to "code coach", root_path, class: "wordmark" %>
+      <nav aria-label="Main navigation">
+        <% if current_user %>
+          <%= link_to "Practice", problems_path %>
+          <%= link_to "My submissions", attempts_path %>
+          <span class="account-label"><%= current_user.email %></span>
+          <%= button_to "Sign out", session_path, method: :delete, class: "text-button" %>
+        <% else %>
+          <%= link_to "Sign in", new_session_path %>
+          <%= link_to "Create account", new_registration_path %>
+        <% end %>
+      </nav>
+    </header>
+    <main id="main-content" class="page-shell" tabindex="-1">
+      <% flash.each do |type, message| %><div class="notice <%= type %>" role="status"><%= message %></div><% end %>
+      <%= yield %>
+    </main>
+    <footer class="site-footer">Code Coach</footer>
   </body>
 </html>

@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+require "pathname"
+
+APP_ROOT = Pathname.new(__dir__).parent.freeze
+REQUIRED_RUBY = APP_ROOT.join(".ruby-version").read.strip.freeze
+
+abort "Ruby #{REQUIRED_RUBY} is required; found #{RUBY_VERSION}." unless RUBY_VERSION == REQUIRED_RUBY
+abort "Docker is required. Start Docker, then run this command again." unless system("docker", "info", out: File::NULL, err: File::NULL)
+
+Dir.chdir(APP_ROOT) { exec "bin/setup", "--skip-server" }

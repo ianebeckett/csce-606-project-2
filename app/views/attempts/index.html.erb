@@ -1,0 +1,14 @@
+<% content_for :title, "My submissions · Code Coach" %>
+<h1>My submissions</h1>
+<p class="muted">Showing your latest <%= AttemptsController::HISTORY_LIMIT %> submissions.</p>
+<% if @attempts.empty? %>
+  <div class="empty-state"><h2>No submissions yet.</h2><p>Select a problem to submit a solution.</p><%= link_to "View problems", problems_path, class: "button" %></div>
+<% else %>
+  <div class="table-wrap"><table><caption class="sr-only">Your submissions</caption>
+    <thead><tr><th scope="col">Problem</th><th scope="col">Result</th><th scope="col">Cases passed</th><th scope="col">Submitted</th></tr></thead>
+    <tbody><% @attempts.each do |attempt| %><tr>
+      <td><%= link_to attempt.problem.title, attempt_path(attempt) %></td><td><%= attempt.judge_result %></td>
+      <td><%= attempt.passed_cases %> / <%= attempt.total_cases %></td><td><%= attempt.created_at.strftime(ApplicationHelper::SUBMISSION_TIME_FORMAT) %></td>
+    </tr><% end %></tbody>
+  </table></div>
+<% end %>

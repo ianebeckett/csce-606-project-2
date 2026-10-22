@@ -6,6 +6,36 @@ on:
     branches: [ main ]
 
 jobs:
+  tests:
+    runs-on: ubuntu-latest
+    env:
+      RAILS_ENV: test
+      COVERAGE: "1"
+      RUBOCOP_CACHE_ROOT: tmp/rubocop
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: Build isolated Ruby executor
+        run: bin/judge-build
+      - name: Prepare test database
+        run: bin/rails db:prepare
+      - name: Run RSpec and enforce unit coverage
+        run: bundle exec rspec
+      - name: Run Cucumber and enforce acceptance coverage
+        run: bundle exec cucumber
+      - name: Enforce combined coverage
+        run: bundle exec ruby test_support/merge_coverage.rb
+      - name: Save coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+
   scan_ruby:
     runs-on: ubuntu-latest
 
@@ -53,7 +83,7 @@ jobs:
           bundler-cache: true
 
       - name: Prepare RuboCop cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         env:
           DEPENDENCIES_HASH: ${{ hashFiles('.ruby-version', '**/.rubocop.yml', '**/.rubocop_todo.yml', 'Gemfile.lock') }}
         with:

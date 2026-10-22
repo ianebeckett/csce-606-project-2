@@ -1,0 +1,6 @@
+<% if record.errors.any? %>
+  <div class="notice error" role="alert" tabindex="-1">
+    <h2>Please check your submission</h2>
+    <ul><% record.errors.full_messages.each do |message| %><li><%= message %></li><% end %></ul>
+  </div>
+<% end %>

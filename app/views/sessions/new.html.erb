@@ -1,0 +1,12 @@
+<% content_for :title, "Sign in · Code Coach" %>
+<section class="auth-card">
+  <h1>Sign in</h1>
+  <%= form_with url: session_path, local: true do |form| %>
+    <%= form.label :email, "Email" %>
+    <%= form.email_field :email, required: true, autocomplete: "email", value: params[:email] %>
+    <%= form.label :password, "Password" %>
+    <%= form.password_field :password, required: true, autocomplete: "current-password" %>
+    <%= form.submit "Sign in", class: "button" %>
+  <% end %>
+  <p><%= link_to "Create an account", new_registration_path %></p>
+</section>

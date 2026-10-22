@@ -1,28 +1,15 @@
-# README
+# Code Coach
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+## Install
 
-Things you may want to cover:
+- Git
+- Ruby 4.0.1
+- Bundler 4.0.19
+- GNU Make
+- Docker Desktop (macOS or Windows) or Docker Engine (Linux)
 
-* Ruby version
+## Run
 
-* System dependencies
-
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for PR and commit-message guidelines.
+1. Clone this repository.
+2. Start Docker.
+3. Run `make run` from the project directory to start local development.

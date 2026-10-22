@@ -20,6 +20,8 @@ Bundler.require(*Rails.groups)
 
 module Codecoach
   class Application < Rails::Application
+    TIME_ZONE = "America/Chicago".freeze
+
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.1
 
@@ -33,7 +35,7 @@ module Codecoach
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #
-    # config.time_zone = "Central Time (US & Canada)"
+    config.time_zone = TIME_ZONE
     # config.eager_load_paths << Rails.root.join("extras")
 
     # Don't generate system test files.

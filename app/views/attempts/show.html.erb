@@ -1,0 +1,11 @@
+<% content_for :title, "#{@attempt.judge_result} · Code Coach" %>
+<%= link_to "← My submissions", attempts_path, class: "back-link" %>
+<p class="eyebrow">SUBMISSION #<%= @attempt.id %></p><h1><%= @attempt.problem.title %></h1>
+<div class="result-card" role="status">
+  <h2><%= @attempt.judge_result %></h2>
+  <p class="case-count"><%= @attempt.passed_cases %> / <%= @attempt.total_cases %> test cases passed</p>
+  <p class="muted">Language: Ruby · <%= @attempt.created_at.strftime(ApplicationHelper::SUBMISSION_TIME_FORMAT) %></p>
+  <% if @attempt.error_message.present? %><pre class="error-detail"><%= @attempt.error_message %></pre><% end %>
+</div>
+<h2>Submitted Ruby code</h2><pre class="saved-code"><code><%= @attempt.code %></code></pre>
+<%= link_to "Try this problem again", problem_path(@attempt.problem), class: "button" %>

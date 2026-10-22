@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+require "pathname"
+
+APP_ROOT = Pathname.new(__dir__).parent.freeze
+DEFAULT_IMAGE = "codecoach-judge:local".freeze
+
+exec("docker", "build", "--tag", DEFAULT_IMAGE, "--file", APP_ROOT.join("judge/Dockerfile").to_s, APP_ROOT.join("judge").to_s)

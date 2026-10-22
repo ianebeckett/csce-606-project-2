@@ -1,0 +1,15 @@
+<% content_for :title, "Create an account · Code Coach" %>
+<section class="auth-card">
+  <h1>Create an account</h1>
+  <%= render "shared/errors", record: @user %>
+  <%= form_with model: @user, url: registration_path, local: true do |form| %>
+    <%= form.label :email, "Email" %>
+    <%= form.email_field :email, required: true, autocomplete: "email" %>
+    <%= form.label :password, "Password (at least #{User::MINIMUM_PASSWORD_LENGTH} characters)" %>
+    <%= form.password_field :password, required: true, minlength: User::MINIMUM_PASSWORD_LENGTH, autocomplete: "new-password" %>
+    <%= form.label :password_confirmation, "Confirm password" %>
+    <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password" %>
+    <%= form.submit "Create account", class: "button" %>
+  <% end %>
+  <p><%= link_to "Sign in", new_session_path %></p>
+</section>

@@ -1,0 +1,30 @@
+<% content_for :title, "#{@problem.title} · Code Coach" %>
+<%= link_to "← All problems", problems_path, class: "back-link" %>
+<div class="workspace">
+  <section class="description-panel" aria-labelledby="problem-title">
+    <p class="eyebrow"><%= @problem.topic.name %></p>
+    <h1 id="problem-title"><%= @problem.title %></h1>
+    <div class="badges"><span class="badge easy"><%= @problem.difficulty %></span><span class="badge ruby">Ruby only</span></div>
+    <p class="problem-description"><%= @problem.description %></p>
+    <h2>Examples</h2>
+    <% @problem.test_cases.select(&:visible).each_with_index do |test_case, index| %>
+      <div class="example"><h3>Example <%= index + 1 %></h3><pre>Arguments: <%= JSON.generate(test_case.input.fetch("args")) %>
+Returns:   <%= JSON.generate(test_case.expected_output) %></pre></div>
+    <% end %>
+    <p class="small"><%= link_to "LeetCode", @problem.source_url, rel: "noreferrer" %></p>
+  </section>
+  <section class="editor-panel" aria-labelledby="editor-title">
+    <div class="panel-title"><h2 id="editor-title">Your solution</h2><span class="badge ruby">Ruby <%= ApplicationHelper::EXECUTOR_RUBY_VERSION %></span></div>
+    <%= render "shared/errors", record: @attempt %>
+    <%= form_with model: @attempt, url: problem_attempts_path(@problem), local: true do |form| %>
+      <%= form.hidden_field :language, value: Attempt::LANGUAGE %>
+      <%= form.label :code, "Ruby source code" %>
+      <%= form.text_area :code, rows: ApplicationHelper::CODE_EDITOR_ROWS, spellcheck: false, class: "code-editor", required: true %>
+      <% if @problem.ready_for_judging? %>
+        <%= form.submit "Submit Ruby solution", class: "button" %>
+      <% else %>
+        <p role="status">This problem is not ready for judging: at least five cases are required.</p>
+      <% end %>
+    <% end %>
+  </section>
+</div>

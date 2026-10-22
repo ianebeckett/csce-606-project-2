@@ -1,0 +1,29 @@
+<% content_for :title, "Practice · Code Coach" %>
+<div class="page-heading">
+  <h1>Problems</h1>
+  <div class="stat-card"><strong><%= @solved_ids.size %><span> / <%= ProblemsController::PRACTICE_SET_SIZE %></span></strong><span>problems accepted</span></div>
+</div>
+<div class="catalog-layout">
+  <aside class="topic-panel" aria-label="Problem topics">
+    <h2>TOPICS</h2>
+    <%= link_to "All problems", problems_path, class: params[:topic].blank? ? "topic-link selected" : "topic-link" %>
+    <% @topics.each_with_index do |topic, index| %>
+      <%= link_to problems_path(topic: topic.id), class: params[:topic].to_s == topic.id.to_s ? "topic-link selected" : "topic-link" do %>
+        <span class="topic-number"><%= (index + 1).to_s.rjust(ApplicationHelper::NUMBER_WIDTH, ApplicationHelper::NUMBER_PADDING) %></span><%= topic.name %>
+      <% end %>
+    <% end %>
+  </aside>
+  <section class="problem-panel" aria-labelledby="problem-list-title">
+    <div class="panel-title"><h2 id="problem-list-title">Problem list</h2><span class="badge ruby">Ruby only</span></div>
+    <% if @problems.empty? %><p class="empty-state">No problems are available in this topic yet.</p><% end %>
+    <% @problems.each_with_index do |problem, index| %>
+      <article class="problem-row">
+        <span class="problem-number"><%= (index + 1).to_s.rjust(ApplicationHelper::NUMBER_WIDTH, ApplicationHelper::NUMBER_PADDING) %></span>
+        <div><p class="muted small"><%= problem.topic.name %></p><h3><%= link_to problem.title, problem_path(problem) %></h3></div>
+        <span class="badge easy"><%= problem.difficulty %></span>
+        <span class="problem-status"><%= @solved_ids.include?(problem.id) ? Attempt::ACCEPTED : "Not solved" %></span>
+        <%= link_to "Practice →", problem_path(problem), class: "practice-link", aria: { label: "Practice #{problem.title}" } %>
+      </article>
+    <% end %>
+  </section>
+</div>
