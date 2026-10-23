@@ -10,6 +10,9 @@ Given("I am signed in as a {string} member") do |role|
 end
 
 When("I open the problem list without signing in") { visit problems_path }
+Given("I have completed the prerequisites for {string}") do |slug|
+  complete_prerequisites(@user, Problem.find_by!(slug: slug).topic)
+end
 Then("I am asked to sign in") { expect(page).to have_content("Please sign in to practice.") }
 Then("no submission has been created") { expect(Attempt.count).to eq(0) }
 

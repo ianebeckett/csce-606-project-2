@@ -18,6 +18,7 @@ RSpec.describe "Online Judge requests", type: :request do
   end
 
   it "authenticates, filters topics, and signs out without JavaScript" do
+    complete_prerequisites(user, Topic.find_by!(name: "Stack"))
     get new_session_path
     expect(response.body).to include("<h1>Sign in</h1>")
     get new_registration_path

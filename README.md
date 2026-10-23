@@ -14,6 +14,12 @@
 2. Start Docker and confirm `docker info` succeeds without `sudo`.
 3. Run `make run` from the project directory to start local development.
 
+For an existing database, run `bin/rails db:migrate db:seed` to install the
+roadmap's prerequisite links. Seeding preserves accounts and submissions.
+
+See the [user guide](docs/user_guide.md) for roadmap states and practice, and
+[roadmap implementation](docs/roadmap.md) for model contracts and validation.
+
 ## Tests and quality checks
 
 Install the Ruby version in `.ruby-version` and run `bundle install`, then:

@@ -1,0 +1,9 @@
+<% content_for :title, "Topic locked · Code Coach" %>
+<h1>Topic locked</h1>
+<p>Master the prerequisites before practicing <%= topic.name %>:</p>
+<ul>
+  <% topic.prerequisites.each do |prerequisite| %>
+    <li><%= prerequisite.name %> — <%= roadmap.state(prerequisite) %></li>
+  <% end %>
+</ul>
+<%= link_to "Back to roadmap", problems_path %>
