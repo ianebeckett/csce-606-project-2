@@ -3,6 +3,7 @@ class CodeReviewsController < ApplicationController
 
   before_action :set_attempt
   before_action :require_premium
+  before_action :require_code
 
   def create
     @review = CodeReview::Reviewer.new(client: Ai.client).call(
@@ -18,6 +19,10 @@ class CodeReviewsController < ApplicationController
 
   def set_attempt
     @attempt = current_user.attempts.includes(practice_session: :problem).find(params[:attempt_id])
+  end
+
+  def require_code
+    redirect_to attempt_path(@attempt), alert: "There's no code to review yet." if @attempt.code.blank?
   end
 
   def require_premium

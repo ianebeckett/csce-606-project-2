@@ -127,6 +127,26 @@ RSpec.describe "AI code review requests", type: :request do
       expect(response.body).to include("Get AI code review")
     end
 
+    it "does not offer a review for a blank submission" do
+      attempt.update_column(:code, " \n")
+
+      get attempt_path(attempt)
+
+      expect(response.body).not_to include("Get AI code review")
+    end
+
+    it "does not contact the AI for a blank submission" do
+      attempt.update_column(:code, "")
+      client = Ai::FakeClient.new(reply: ai_review_reply)
+      use_ai_client(client)
+
+      post attempt_code_review_path(attempt)
+
+      expect(response).to redirect_to(attempt_path(attempt))
+      expect(flash[:alert]).to eq("There's no code to review yet.")
+      expect(client.last_prompt).to be_nil
+    end
+
     it "cannot review another member's attempt" do
       other = create_attempt(create_user(email: "other@example.com", role: "Premium"))
       client = Ai::FakeClient.new(reply: ai_review_reply)
