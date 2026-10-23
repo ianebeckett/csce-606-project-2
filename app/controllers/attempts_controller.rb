@@ -1,4 +1,6 @@
 class AttemptsController < ApplicationController
+  include RoadmapAccess
+
   HISTORY_LIMIT = 100
 
   def index
@@ -11,6 +13,8 @@ class AttemptsController < ApplicationController
 
   def create
     @problem = Problem.includes(:test_cases).find_by!(slug: params[:problem_id])
+    return unless require_unlocked_topic(@problem.topic)
+
     @attempt = Attempt.new(params.require(:attempt).permit(:code, :language))
 
     unless @problem.ready_for_judging?

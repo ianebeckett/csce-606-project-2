@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_20_181158) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_22_020000) do
   create_table "attempts", force: :cascade do |t|
     t.integer "practice_session_id", null: false
     t.text "code", null: false
@@ -71,6 +71,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_181158) do
     t.index ["problem_id"], name: "index_test_cases_on_problem_id"
   end
 
+  create_table "topic_prerequisites", force: :cascade do |t|
+    t.integer "topic_id", null: false
+    t.integer "prerequisite_topic_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["prerequisite_topic_id"], name: "index_topic_prerequisites_on_prerequisite_topic_id"
+    t.index ["topic_id", "prerequisite_topic_id"], name: "idx_on_topic_id_prerequisite_topic_id_1515a7b7d6", unique: true
+    t.index ["topic_id"], name: "index_topic_prerequisites_on_topic_id"
+    t.check_constraint "topic_id != prerequisite_topic_id", name: "topics_cannot_require_themselves"
+  end
+
   create_table "topics", force: :cascade do |t|
     t.string "name", null: false
     t.integer "position", null: false
@@ -93,4 +104,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_181158) do
   add_foreign_key "practice_sessions", "users"
   add_foreign_key "problems", "topics"
   add_foreign_key "test_cases", "problems"
+  add_foreign_key "topic_prerequisites", "topics"
+  add_foreign_key "topic_prerequisites", "topics", column: "prerequisite_topic_id"
 end

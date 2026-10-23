@@ -1,27 +1,37 @@
-<% content_for :title, "Practice · Code Coach" %>
+<% content_for :title, "Roadmap & Problems · Code Coach" %>
 <div class="page-heading">
   <h1>Problems</h1>
-  <div class="stat-card"><strong><%= @solved_ids.size %><span> / <%= ProblemsController::PRACTICE_SET_SIZE %></span></strong><span>problems accepted</span></div>
+  <div class="stat-card"><strong><%= roadmap.solved_ids.size %><span> / <%= roadmap.topics.sum { |topic| topic.problems.size } %></span></strong><span>problems accepted</span></div>
 </div>
 <div class="catalog-layout">
   <aside class="topic-panel" aria-label="Problem topics">
-    <h2>TOPICS</h2>
-    <%= link_to "All problems", problems_path, class: params[:topic].blank? ? "topic-link selected" : "topic-link" %>
-    <% @topics.each_with_index do |topic, index| %>
-      <%= link_to problems_path(topic: topic.id), class: params[:topic].to_s == topic.id.to_s ? "topic-link selected" : "topic-link" do %>
-        <span class="topic-number"><%= (index + 1).to_s.rjust(ApplicationHelper::NUMBER_WIDTH, ApplicationHelper::NUMBER_PADDING) %></span><%= topic.name %>
-      <% end %>
+    <h2>ROADMAP</h2>
+    <p class="small">Master each prerequisite to unlock the next topics.</p>
+    <%= link_to "All unlocked problems", problems_path, class: @topic.nil? ? "topic-link selected" : "topic-link" %>
+    <% if roadmap.topics.empty? %><p>No topics are available yet.</p><% end %>
+    <% roadmap.topics.each do |topic| %>
+      <div class="roadmap-topic <%= "selected" if @topic == topic %>">
+        <% if roadmap.unlocked?(topic) %>
+          <%= link_to topic.name, problems_path(topic: topic.id), class: "topic-link" %>
+        <% else %>
+          <span class="topic-link"><%= topic.name %></span>
+        <% end %>
+        <span class="topic-status"><%= roadmap.state(topic) %></span>
+        <% if topic.prerequisites.any? %>
+          <p class="small muted">Requires: <%= topic.prerequisites.map(&:name).join(", ") %></p>
+        <% end %>
+      </div>
     <% end %>
   </aside>
   <section class="problem-panel" aria-labelledby="problem-list-title">
-    <div class="panel-title"><h2 id="problem-list-title">Problem list</h2><span class="badge ruby">Ruby only</span></div>
-    <% if @problems.empty? %><p class="empty-state">No problems are available in this topic yet.</p><% end %>
+    <div class="panel-title"><h2 id="problem-list-title"><%= @topic&.name || "Unlocked problems" %></h2><span class="badge ruby">Ruby only</span></div>
+    <% if @problems.empty? %><p class="empty-state"><%= @topic ? "No problems are available in this topic yet." : "No unlocked problems are available yet." %></p><% end %>
     <% @problems.each_with_index do |problem, index| %>
       <article class="problem-row">
         <span class="problem-number"><%= (index + 1).to_s.rjust(ApplicationHelper::NUMBER_WIDTH, ApplicationHelper::NUMBER_PADDING) %></span>
         <div><p class="muted small"><%= problem.topic.name %></p><h3><%= link_to problem.title, problem_path(problem) %></h3></div>
         <span class="badge easy"><%= problem.difficulty %></span>
-        <span class="problem-status"><%= @solved_ids.include?(problem.id) ? Attempt::ACCEPTED : "Not solved" %></span>
+        <span class="problem-status"><%= roadmap.solved_ids.include?(problem.id) ? Attempt::ACCEPTED : "Not solved" %></span>
         <%= link_to "Practice →", problem_path(problem), class: "practice-link", aria: { label: "Practice #{problem.title}" } %>
       </article>
     <% end %>

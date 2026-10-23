@@ -13,6 +13,7 @@ Feature: US7 — Online Judge & Error Recovery
 
   Scenario Outline: Solve a real problem using Ruby without JavaScript
     Given I am signed in as a "<role>" member
+    And I have completed the prerequisites for "<slug>"
     When I submit a correct Ruby solution for "<slug>"
     Then I see an "Accepted" result with every predefined case passed
     And my submitted code is preserved in my personal history

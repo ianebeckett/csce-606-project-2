@@ -17,4 +17,11 @@ ActiveRecord::Base.transaction do
       test_case.update!(input: { args: arguments }, expected_output: output, visible: position < TestCase::VISIBLE_CASE_COUNT)
     end
   end
+
+  JUDGE_PROBLEMS.each do |definition|
+    topic = Topic.find_by!(name: definition.fetch(:topic))
+    definition.fetch(:prerequisites, []).each do |name|
+      topic.topic_prerequisites.find_or_create_by!(prerequisite_topic: Topic.find_by!(name: name))
+    end
+  end
 end
