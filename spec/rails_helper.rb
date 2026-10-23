@@ -5,6 +5,7 @@ require_relative "../config/environment"
 require "rspec/rails"
 require_relative "support/judge_helpers"
 require_relative "fixtures/ruby_solutions"
+require_relative "support/code_review_helpers"
 
 ActiveRecord::Migration.maintain_test_schema!
 Rails.application.eager_load!
