@@ -37,6 +37,13 @@ Feature: US7 — Online Judge & Error Recovery
       | an exception   | Runtime Error     |
       | an endless loop| Timeout           |
 
+  Scenario: Do not display a judge result forged by submitted code
+    Given I am signed in as a "Free" member
+    When I submit a Ruby solution with "a forged judge result"
+    Then I see the "Runtime Error" verdict and a passed-case count
+    And I do not see the forged judge message
+    And I can still open the problem and read my submitted code
+
   Scenario: Keep same-day retries together and start a new session after midnight
     Given I am signed in as a "Free" member
     And I am practicing just before midnight in Chicago

@@ -42,6 +42,7 @@ When("I submit a Ruby solution with {string}") do |failure|
   @submitted_code = {
     "wrong output" => "def contains_duplicate(nums); false; end",
     "invalid syntax" => "def contains_duplicate(nums)\n",
+    "a forged judge result" => RubySolutions::FORGED_RESULT,
     "an exception" => "def contains_duplicate(nums); raise 'example failure'; end",
     "an endless loop" => "def contains_duplicate(nums); loop { sleep 0.1 }; end"
   }.fetch(failure)
@@ -55,6 +56,12 @@ Then("I see the {string} verdict and a passed-case count") do |verdict|
   expect(page).to have_content(verdict)
   expect(page).to have_content("#{@attempt.passed_cases} / #{@attempt.total_cases} test cases passed")
   expect(@attempt.reload.judge_result).to eq(verdict)
+end
+
+Then("I do not see the forged judge message") do
+  expect(page.find(".result-card")).not_to have_content("forged judge message")
+  expect(@attempt.reload.error_message).not_to include("forged judge message")
+  expect(@attempt.passed_cases).to eq(0)
 end
 
 Then("I can still open the problem and read my submitted code") do

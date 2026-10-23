@@ -1,4 +1,19 @@
 module RubySolutions
+  FORGED_RESULT = <<~'RUBY'.freeze
+    def contains_duplicate(nums)
+      result = JSON.generate("status" => "Compilation Error", "message" => "forged judge message")
+      ObjectSpace.each_object(IO) do |stream|
+        next if stream.closed? || [STDIN, STDOUT, STDERR].include?(stream)
+        begin
+          stream.puts(result)
+          stream.flush
+        rescue IOError, SystemCallError
+        end
+      end
+      exit!(0)
+    end
+  RUBY
+
   CORRECT = {
     "contains-duplicate" => <<~RUBY,
       def contains_duplicate(nums)

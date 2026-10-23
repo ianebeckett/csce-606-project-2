@@ -19,7 +19,7 @@ module Judge
       output_limited = false
       deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
 
-      Open3.popen3(*arguments, pgroup: true) do |stdin, stdout, stderr, process|
+      Open3.popen3(*arguments, pgroup: true, close_others: true) do |stdin, stdout, stderr, process|
         writer = Thread.new do
           begin
             stdin.write(input)
@@ -52,7 +52,7 @@ module Judge
           output_limited = output.bytesize + errors.bytesize > OUTPUT_LIMIT
           break if output_limited
         end
-        terminate(process.pid) if timed_out || output_limited
+        terminate(process) if timed_out || output_limited
         writer.join(WRITER_JOIN_TIMEOUT)
         writer.kill if writer.alive?
         Result.new(output, errors, process.value.exitstatus, timed_out, output_limited)
@@ -63,9 +63,13 @@ module Judge
 
     private
 
-    def terminate(pid)
-      Process.kill(TERMINATION_SIGNAL, -pid)
-    rescue Errno::ESRCH
+    def terminate(process)
+      [ -process.pid, process.pid ].each do |target|
+        next if target.positive? && !process.alive?
+
+        Process.kill(TERMINATION_SIGNAL, target)
+      rescue Errno::ESRCH
+      end
     end
   end
 end

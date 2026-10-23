@@ -20,9 +20,9 @@ else
         return unless coverage
 
         mapped = coverage.each_with_object({}) do |(path, data), output|
-          next unless CoverageConfig::EXECUTOR_FILES.include?(path)
+          next unless CoverageConfig::EXECUTOR_FILES.key?(path)
 
-          local = File.expand_path("../judge/#{File.basename(path)}", __dir__)
+          local = File.expand_path("../#{CoverageConfig::EXECUTOR_FILES.fetch(path)}", __dir__)
           output[local] = { "lines" => data.fetch("lines") }
         end
         @measured = SimpleCov::Combine::ResultsCombiner.combine(@measured || {}, mapped)
