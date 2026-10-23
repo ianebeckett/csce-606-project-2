@@ -7,8 +7,9 @@ else
   ENV["JUDGE_COVERAGE"] = "1"
 
   SimpleCov.start do
+    root File.expand_path("..", __dir__)
     command_name ENV.fetch("COVERAGE_SUITE")
-    coverage_dir "coverage/#{ENV.fetch('COVERAGE_SUITE').downcase}"
+    coverage_dir File.join(CoverageConfig::REPORT_ROOT, ENV.fetch("COVERAGE_SUITE").downcase)
     cover(*CoverageConfig::SOURCE_FILES)
     merging false
     minimum_coverage CoverageConfig::MINIMUM_PERCENT

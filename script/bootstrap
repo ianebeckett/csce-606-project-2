@@ -5,6 +5,21 @@ APP_ROOT = Pathname.new(__dir__).parent.freeze
 REQUIRED_RUBY = APP_ROOT.join(".ruby-version").read.strip.freeze
 
 abort "Ruby #{REQUIRED_RUBY} is required; found #{RUBY_VERSION}." unless RUBY_VERSION == REQUIRED_RUBY
-abort "Docker is required. Start Docker, then run this command again." unless system("docker", "info", out: File::NULL, err: File::NULL)
+unless system("docker", "--version", out: File::NULL, err: File::NULL)
+  abort "Docker is required. Install Docker Desktop (macOS/Windows) or Docker Engine (Linux), then retry."
+end
+
+unless system("docker", "info", out: File::NULL)
+  abort <<~MESSAGE
+    Docker is installed but unavailable to this user. See the Docker error above.
+    Start Docker and confirm that `docker info` succeeds without sudo.
+    On Linux, a socket permission error may require adding your user to the docker group.
+    If you already did that, the current shell still needs its group permissions refreshed:
+      1. Run `newgrp docker` in your terminal to start a shell with Docker group access.
+      2. Run `docker info` in that shell; when it succeeds, run `make run` there.
+    Alternatively, fully log out and back in. Restarting Docker does not refresh shell permissions.
+    See README.md for setup instructions.
+  MESSAGE
+end
 
 Dir.chdir(APP_ROOT) { exec "bin/setup", "--skip-server" }
