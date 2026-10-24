@@ -14,6 +14,7 @@ class Attempt < ApplicationRecord
   belongs_to :practice_session
   has_one :user, through: :practice_session
   has_one :problem, through: :practice_session
+  has_many :conversation_messages, dependent: :destroy
 
   validates :code, presence: true, length: { maximum: MAX_CODE_LENGTH }
   validates :language, inclusion: { in: LANGUAGES, message: "must be Ruby; only Ruby is supported" }

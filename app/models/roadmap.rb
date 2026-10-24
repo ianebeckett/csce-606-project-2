@@ -4,8 +4,7 @@ class Roadmap
   def initialize(user)
     @topics = Topic.includes(:problems, :prerequisites).order(:position, :id).to_a
     @topics_by_id = @topics.index_by(&:id)
-    @solved_ids = user.attempts.where(judge_result: Attempt::ACCEPTED).joins(:practice_session)
-      .distinct.pluck("practice_sessions.problem_id")
+    @solved_ids = user.solved_problem_ids
     @states = {}
   end
 
