@@ -45,6 +45,44 @@ RSpec.describe Judge::DockerRunner do
     end
   end
 
+  it "distinguishes submission exits from Docker startup failures" do
+    [ "exit(1)", "exit!(1)", "exit!(125)", "exit!(126)", "exit!(127)", "at_exit { exit 3 }; true" ].each do |expression|
+      result = described_class.new.call(code: "def contains_duplicate(nums); #{expression}; end",
+        problem: problem, input: { "args" => [ [ 1 ] ] })
+      aggregate_failures(expression) do
+        expect(result.fetch("status")).to eq("Runtime Error")
+      end
+    end
+
+    result = described_class.new(image: "codecoach-missing:#{SecureRandom.uuid}").call(
+      code: "def contains_duplicate(nums); false; end", problem: problem, input: { "args" => [ [ 1 ] ] })
+    expect(result.fetch("status")).to eq("Judge Unavailable")
+  end
+
+  it "combines parent and child executor coverage" do
+    payload = JSON.generate(
+      code: "def contains_duplicate(nums); true; end",
+      method_name: problem.method_name,
+      input_kind: problem.input_kind,
+      input: { "args" => [ [ 1, 1 ] ] }
+    )
+    execution = Judge::Command.new.call(
+      [ "docker", "run", "--rm", "--pull=never", "--interactive", "--env", "JUDGE_COVERAGE=1",
+        described_class::DEFAULT_IMAGE ],
+      input: payload, timeout: 4
+    )
+    report = JSON.parse(execution.stdout).fetch("coverage")
+
+    {
+      "/judge/main.rb" => "Process.wait2",
+      "/judge/runner.rb" => "class RubySubmission"
+    }.each do |path, source_line|
+      line_index = File.readlines(Rails.root.join(path.delete_prefix("/"))).index { |line| line.include?(source_line) }
+      expect(line_index).not_to be_nil
+      expect(report.fetch(path).fetch("lines").fetch(line_index)).to be_positive
+    end
+  end
+
   it "enforces the non-root identity, memory limit, process limit, and network namespace" do
     code = <<~RUBY
       def contains_duplicate(nums)

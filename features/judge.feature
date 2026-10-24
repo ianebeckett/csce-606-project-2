@@ -36,6 +36,7 @@ Feature: US7 — Online Judge & Error Recovery
       | wrong output   | Wrong Answer      |
       | invalid syntax | Compilation Error |
       | an exception   | Runtime Error     |
+      | an abrupt exit | Runtime Error     |
       | an endless loop| Timeout           |
 
   Scenario: Keep same-day retries together and start a new session after midnight

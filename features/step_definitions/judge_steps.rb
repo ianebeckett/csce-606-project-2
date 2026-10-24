@@ -46,6 +46,7 @@ When("I submit a Ruby solution with {string}") do |failure|
     "wrong output" => "def contains_duplicate(nums); false; end",
     "invalid syntax" => "def contains_duplicate(nums)\n",
     "an exception" => "def contains_duplicate(nums); raise 'example failure'; end",
+    "an abrupt exit" => "def contains_duplicate(nums); exit!(125); end",
     "an endless loop" => "def contains_duplicate(nums); loop { sleep 0.1 }; end"
   }.fetch(failure)
   visit problem_path(@problem)
