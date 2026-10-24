@@ -1,0 +1,39 @@
+<% content_for :title, "My learning history · Code Coach" %>
+<h1>My learning history</h1>
+
+<section aria-labelledby="history-summary">
+  <h2 id="history-summary">Summary</h2>
+  <p>Problems solved: <%= @solved_count %></p>
+  <p>Reviews scheduled: <%= @review_count %></p>
+</section>
+
+<section aria-labelledby="topic-progress">
+  <h2 id="topic-progress">Progress by topic</h2>
+  <% if @topic_progress.empty? %>
+    <p>No topics are available yet.</p>
+  <% else %>
+    <ul>
+      <% @topic_progress.each do |progress| %>
+        <li><%= progress[:topic].name %>: <%= progress[:solved_count] %> / <%= progress[:total_count] %> problems solved</li>
+      <% end %>
+    </ul>
+  <% end %>
+</section>
+
+<section aria-labelledby="past-attempts">
+  <h2 id="past-attempts">Past attempts</h2>
+  <% if @attempts.empty? %>
+    <p>No practice history yet. <%= link_to "Choose a problem to practice", problems_path %>.</p>
+  <% else %>
+    <ul>
+      <% @attempts.each do |attempt| %>
+        <li>
+          <%= link_to attempt.problem.title, history_path(attempt) %>
+          — <%= attempt.judge_result %>
+          (<%= attempt.passed_cases %> / <%= attempt.total_cases %> test cases)
+          — <%= attempt.created_at.strftime(ApplicationHelper::SUBMISSION_TIME_FORMAT) %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</section>
