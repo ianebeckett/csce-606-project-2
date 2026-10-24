@@ -59,6 +59,30 @@ RSpec.describe Judge::DockerRunner do
     expect(result.fetch("status")).to eq("Judge Unavailable")
   end
 
+  it "combines parent and child executor coverage" do
+    payload = JSON.generate(
+      code: "def contains_duplicate(nums); true; end",
+      method_name: problem.method_name,
+      input_kind: problem.input_kind,
+      input: { "args" => [ [ 1, 1 ] ] }
+    )
+    execution = Judge::Command.new.call(
+      [ "docker", "run", "--rm", "--pull=never", "--interactive", "--env", "JUDGE_COVERAGE=1",
+        described_class::DEFAULT_IMAGE ],
+      input: payload, timeout: 4
+    )
+    report = JSON.parse(execution.stdout).fetch("coverage")
+
+    {
+      "/judge/main.rb" => "Process.wait2",
+      "/judge/runner.rb" => "class RubySubmission"
+    }.each do |path, source_line|
+      line_index = File.readlines(Rails.root.join(path.delete_prefix("/"))).index { |line| line.include?(source_line) }
+      expect(line_index).not_to be_nil
+      expect(report.fetch(path).fetch("lines").fetch(line_index)).to be_positive
+    end
+  end
+
   it "enforces the non-root identity, memory limit, process limit, and network namespace" do
     code = <<~RUBY
       def contains_duplicate(nums)
