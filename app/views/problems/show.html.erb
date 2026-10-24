@@ -19,7 +19,7 @@ Returns:   <%= JSON.generate(test_case.expected_output) %></pre></div>
     <%= form_with model: @attempt, url: problem_attempts_path(@problem), local: true do |form| %>
       <%= form.hidden_field :language, value: Attempt::LANGUAGE %>
       <%= form.label :code, "Ruby source code" %>
-      <%= form.text_area :code, rows: ApplicationHelper::CODE_EDITOR_ROWS, spellcheck: false, class: "code-editor", required: true %>
+      <%= form.text_area :code, rows: ApplicationHelper::CODE_EDITOR_ROWS, spellcheck: false, class: "code-editor" %>
       <% if @problem.ready_for_judging? %>
         <%= form.submit "Submit Ruby solution", class: "button" %>
       <% else %>

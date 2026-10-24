@@ -27,4 +27,22 @@ RSpec.describe Ai do
 
     expect_unconfigured
   end
+
+  describe ".client_from_env" do
+    it "builds an OpenAI client with the default model when a key is set" do
+      client = Ai.client_from_env("OPENAI_API_KEY" => "sk-test")
+
+      expect(client).to be_a(Ai::OpenAiClient)
+      expect(client.model).to eq("gpt-6-luna")
+    end
+
+    it "uses the model from OPENAI_MODEL when set" do
+      expect(Ai.client_from_env("OPENAI_API_KEY" => "sk-test", "OPENAI_MODEL" => "gpt-6.1-sol").model).to eq("gpt-6.1-sol")
+    end
+
+    it "returns nil when no key is set" do
+      expect(Ai.client_from_env({})).to be_nil
+      expect(Ai.client_from_env("OPENAI_API_KEY" => " ")).to be_nil
+    end
+  end
 end

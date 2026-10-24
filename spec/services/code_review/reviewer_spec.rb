@@ -64,6 +64,17 @@ RSpec.describe CodeReview::Reviewer do
     end
   end
 
+  it "asks for a strict JSON schema matching what the parser reads" do
+    review
+
+    schema = client.last_schema
+    expect(schema[:name]).to eq("code_review")
+    expect(schema[:schema][:required]).to eq(%w[summary complexity suggestions])
+    suggestion = schema[:schema][:properties][:suggestions][:items]
+    expect(suggestion[:properties][:category][:enum]).to eq(%w[correctness complexity edge_case anti_pattern])
+    expect(suggestion[:properties][:line_start][:type]).to eq(%w[integer null])
+  end
+
   it "omits the judge section when the code has not been judged" do
     review(judge_result: nil)
 
