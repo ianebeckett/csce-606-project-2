@@ -10,6 +10,7 @@ JUDGE_PROBLEMS = [
   },
   {
     topic: "Two Pointers", slug: "valid-palindrome", title: "Valid Palindrome", number: 125,
+    prerequisites: [ "Arrays & Hashing" ],
     description: "Ignore punctuation and spaces, compare ASCII letters without case, and keep digits. Return whether the remaining characters read identically in both directions. The input has 1 to 200,000 printable ASCII characters.",
     method_name: "is_palindrome", arguments: "s",
     cases: [
@@ -19,6 +20,7 @@ JUDGE_PROBLEMS = [
   },
   {
     topic: "Stack", slug: "valid-parentheses", title: "Valid Parentheses", number: 20,
+    prerequisites: [ "Arrays & Hashing" ],
     description: "Check a string made only of round, square, and curly brackets. Return true only when every closing bracket matches the most recent unmatched opening bracket and no opening bracket remains. The string has 1 to 10,000 characters.",
     method_name: "is_valid", arguments: "s",
     cases: [
@@ -28,6 +30,7 @@ JUDGE_PROBLEMS = [
   },
   {
     topic: "Binary Search", slug: "binary-search", title: "Binary Search", number: 704,
+    prerequisites: [ "Arrays & Hashing" ],
     description: "Find target in an increasing array of distinct integers. Return its zero-based index, or -1 when absent. Use O(log n) time. The array has 1 to 10,000 values, with values and target strictly between -10,000 and 10,000.",
     method_name: "search", arguments: "nums, target",
     cases: [
@@ -37,6 +40,7 @@ JUDGE_PROBLEMS = [
   },
   {
     topic: "Sliding Window", slug: "maximum-average-subarray-i", title: "Maximum Average Subarray I", number: 643,
+    prerequisites: [ "Two Pointers" ],
     description: "Among all consecutive groups of exactly k elements in nums, return the largest average. Absolute error must be less than 0.00001. The array has at most 100,000 integers between -10,000 and 10,000, and 1 <= k <= nums.length.",
     method_name: "find_max_average", arguments: "nums, k", comparison: "float",
     cases: [
@@ -47,6 +51,7 @@ JUDGE_PROBLEMS = [
   },
   {
     topic: "Linked List", slug: "reverse-linked-list", title: "Reverse Linked List", number: 206,
+    prerequisites: [ "Arrays & Hashing" ],
     description: "Reverse a singly linked list and return its new head. The judge provides ListNode with val and next accessors and converts the input array into nodes for you. Return a ListNode or nil, not an array. Lists have 0 to 5,000 nodes, with values between -5,000 and 5,000.",
     method_name: "reverse_list", arguments: "head", input_kind: "linked_list",
     cases: [

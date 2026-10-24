@@ -13,6 +13,7 @@ Feature: US7 — Online Judge & Error Recovery
 
   Scenario Outline: Solve a real problem using Ruby without JavaScript
     Given I am signed in as a "<role>" member
+    And I have completed the prerequisites for "<slug>"
     When I submit a correct Ruby solution for "<slug>"
     Then I see an "Accepted" result with every predefined case passed
     And my submitted code is preserved in my personal history
@@ -53,11 +54,13 @@ Feature: US7 — Online Judge & Error Recovery
     Then the page explains that only Ruby is supported
     And no submission has been created
 
-  Scenario: Reject an empty Ruby submission
+  Scenario: Keep an empty Ruby submission in my history
     Given I am signed in as a "Free" member
     When I submit an empty Ruby solution
-    Then the page explains that code is required
-    And no submission has been created
+    Then I see the "Runtime Error" verdict and a passed-case count
+    And the page explains that code is required
+    And my submitted code is preserved in my personal history
+    And I can retry with the problem's starter code
 
   Scenario: Do not judge a problem with too few cases
     Given I am signed in as a "Free" member

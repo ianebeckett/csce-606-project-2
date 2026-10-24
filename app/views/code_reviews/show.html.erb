@@ -1,0 +1,34 @@
+<% content_for :title, "AI code review · Code Coach" %>
+<%= link_to "← Back to submission", attempt_path(@attempt), class: "back-link" %>
+<p class="eyebrow">AI CODE REVIEW · SUBMISSION #<%= @attempt.id %></p><h1><%= @attempt.problem.title %></h1>
+<div class="result-card" role="status">
+  <h2>Summary</h2>
+  <p><%= @review.summary %></p>
+  <p class="muted">Time: <%= @review.time_complexity || "not given" %> · Space: <%= @review.space_complexity || "not given" %></p>
+</div>
+<h2>Your code with suggestions</h2>
+<% by_line = suggestions_by_line(@review) %>
+<ol class="review-code">
+  <% @attempt.code.lines.each_with_index do |line, index| %>
+    <li><pre><code><%= line.chomp %></code></pre>
+      <% Array(by_line[index + 1]).each do |suggestion| %>
+        <div class="review-suggestion">
+          <span class="badge category"><%= category_label(suggestion) %></span>
+          <span class="muted small"><%= suggestion_lines(suggestion) %></span>
+          <p><%= suggestion.message %></p>
+        </div>
+      <% end %>
+    </li>
+  <% end %>
+</ol>
+<% general = general_suggestions(@review) %>
+<% if general.any? %>
+  <h2>General suggestions</h2>
+  <ul class="review-general">
+    <% general.each do |suggestion| %>
+      <li><span class="badge category"><%= category_label(suggestion) %></span> <%= suggestion.message %></li>
+    <% end %>
+  </ul>
+<% end %>
+<% if @review.suggestions.empty? %><p class="muted">No specific suggestions for this submission.</p><% end %>
+<p class="muted small">AI feedback can be wrong. Treat it as a starting point, not a verdict.</p>

@@ -10,6 +10,9 @@ Given("I am signed in as a {string} member") do |role|
 end
 
 When("I open the problem list without signing in") { visit problems_path }
+Given("I have completed the prerequisites for {string}") do |slug|
+  complete_prerequisites(@user, Problem.find_by!(slug: slug).topic)
+end
 Then("I am asked to sign in") { expect(page).to have_content("Please sign in to practice.") }
 Then("no submission has been created") { expect(Attempt.count).to eq(0) }
 
@@ -99,9 +102,21 @@ end
 Then("the page explains that only Ruby is supported") { expect(page).to have_content("only Ruby is supported") }
 
 When("I submit an empty Ruby solution") do
-  page.driver.submit(:post, problem_attempts_path(Problem.first), { attempt: { code: "", language: "ruby" } })
+  @problem = Problem.first
+  @submitted_code = ""
+  visit problem_path(@problem)
+  expect(page.find_field("Ruby source code")[:required]).to be_nil
+  fill_in "Ruby source code", with: @submitted_code
+  expect { click_button "Submit Ruby solution" }.to change(Attempt, :count).by(1)
+  @attempt = @user.attempts.order(:id).last
 end
 Then("the page explains that code is required") { expect(page).to have_content("Code can't be blank") }
+
+Then("I can retry with the problem's starter code") do
+  click_link "Try this problem again"
+  expect(page).to have_field("Ruby source code", with: @problem.starter_code)
+  expect(@attempt.reload.code).to eq("")
+end
 
 Given("a problem has fewer than five predefined cases") do
   @problem = Problem.first

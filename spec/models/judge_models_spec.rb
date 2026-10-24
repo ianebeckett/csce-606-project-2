@@ -32,10 +32,9 @@ RSpec.describe "Online Judge models" do
     expect(User.new(email: "bad", password: "short", role: "admin")).not_to be_valid
   end
 
-  it "rejects non-Ruby, empty, and excessively large submissions" do
+  it "rejects non-Ruby and excessively large submissions" do
     session = create_user.practice_sessions.create!(problem: Problem.first, started_at: Time.current)
     expect(session.attempts.new(code: "puts 1", language: "python")).not_to be_valid
-    expect(session.attempts.new(code: "", language: "ruby")).not_to be_valid
     expect(session.attempts.new(code: "x" * 65_537, language: "ruby")).not_to be_valid
   end
 
