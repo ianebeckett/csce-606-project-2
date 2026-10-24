@@ -31,6 +31,18 @@ module Judge
 
     def save_result(attempt, verdict, message = nil)
       attempt.update!(judge_result: verdict, error_message: message)
+
+      # Create a review schedule when the solution is accepted
+      if verdict == Attempt::ACCEPTED
+        ReviewSchedule.find_or_create_by!(
+          user: attempt.user,
+          problem: attempt.problem
+        ) do |schedule|
+          # Schedule the student's first review for tomorrow
+          schedule.interval_days = 1
+          schedule.next_review_date = Date.current + 1.day
+        end
+      end
       attempt
     end
 
