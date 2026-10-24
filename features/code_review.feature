@@ -45,3 +45,18 @@ Feature: US3 — AI Code Review
     When I request an AI code review without the button
     Then I am told AI code review is a Premium feature
     And the AI reviewer is not contacted
+
+  Scenario: A review through the OpenAI provider is tied to the code
+    Given I am signed in as a "Premium" member
+    And I have submitted a solution for "Contains Duplicate"
+    And OpenAI replies with feedback about line 2
+    When I request an AI code review of my submission
+    Then I see the feedback directly under line 2 of my code
+
+  Scenario: OpenAI is having an outage
+    Given I am signed in as a "Premium" member
+    And I have submitted a solution for "Contains Duplicate"
+    And OpenAI is having an outage
+    When I request an AI code review of my submission
+    Then I am told the AI review is unavailable
+    And my submitted code is still shown

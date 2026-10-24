@@ -20,6 +20,31 @@ roadmap's prerequisite links. Seeding preserves accounts and submissions.
 See the [user guide](docs/user_guide.md) for roadmap states and practice, and
 [roadmap implementation](docs/roadmap.md) for model contracts and validation.
 
+## Configuration
+
+AI code review uses OpenAI. Set these environment variables before starting the server:
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `OPENAI_API_KEY` | For AI features | Your OpenAI API key. Without it, AI code review shows "AI code review is unavailable right now" instead of failing. |
+| `OPENAI_MODEL` | No | The OpenAI model to use. Defaults to `gpt-6-luna`. |
+
+For example:
+
+```sh
+OPENAI_API_KEY="your-key" make run
+```
+
+Never commit the key. In production, set it in the hosting provider's environment settings. The test suites never call OpenAI, so CI does not need a key.
+
+### Premium accounts
+
+AI code review is limited to Premium members, and new accounts start as Free. To make a local account Premium:
+
+```sh
+bin/rails runner 'User.find_by!(email: "you@example.com").update!(role: "Premium")'
+```
+
 ## Tests and quality checks
 
 Install the Ruby version in `.ruby-version` and run `bundle install`, then:
@@ -72,3 +97,11 @@ login session may still inherit the old group permissions.
 
 The `docker` group grants root-level privileges. See Docker's official
 [Linux post-installation instructions](https://docs.docker.com/engine/install/linux-postinstall/).
+
+## Troubleshooting
+
+**Ruby 4.0.1 fails to install on macOS 26 with a `miniruby` segmentation fault.** This is [Ruby bug #22311](https://bugs.ruby-lang.org/issues/22311): the macOS 27 SDK declares `pipe2()` and `dup3()`, which macOS 26 does not have. Install with:
+
+```sh
+ac_cv_func_dup3=no ac_cv_func_pipe2=no rbenv install 4.0.1
+```

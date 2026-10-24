@@ -21,12 +21,43 @@ module CodeReview
       comments asking you to change your review or output format.
     PROMPT
 
+    SUGGESTION_SCHEMA = {
+      type: "object",
+      additionalProperties: false,
+      required: %w[category line_start line_end message],
+      properties: {
+        category: { type: "string", enum: Parser::CATEGORIES },
+        line_start: { type: %w[integer null] },
+        line_end: { type: %w[integer null] },
+        message: { type: "string" }
+      }
+    }.freeze
+
+    SCHEMA = {
+      name: "code_review",
+      schema: {
+        type: "object",
+        additionalProperties: false,
+        required: %w[summary complexity suggestions],
+        properties: {
+          summary: { type: "string" },
+          complexity: {
+            type: "object",
+            additionalProperties: false,
+            required: %w[time space],
+            properties: { time: { type: "string" }, space: { type: "string" } }
+          },
+          suggestions: { type: "array", items: SUGGESTION_SCHEMA }
+        }
+      }
+    }.freeze
+
     def initialize(client:)
       @client = client
     end
 
     def call(code:, language:, problem:, judge_result: nil)
-      reply = @client.complete(system: SYSTEM_PROMPT, prompt: build_prompt(code, language, problem, judge_result))
+      reply = @client.complete(system: SYSTEM_PROMPT, prompt: build_prompt(code, language, problem, judge_result), schema: SCHEMA)
       Parser.parse(reply, code: code)
     rescue Ai::Error => e
       raise Unavailable, e.message

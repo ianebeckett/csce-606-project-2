@@ -10,6 +10,17 @@ Given("the AI reviewer has feedback about line {int}") do |line|
   use_ai_client(@ai_client)
 end
 
+Given("OpenAI replies with feedback about line {int}") do |line|
+  tip = { category: "complexity", line_start: line, line_end: line, message: LINE_TIP }
+  reply = { status: "completed", output: [ { type: "message", content: [ { type: "output_text", text: ai_review_reply(suggestions: [ tip ]) } ] } ] }
+  use_ai_client(Ai::OpenAiClient.new(api_key: "test-key", transport: ->(*) { [ 200, reply.to_json ] }))
+end
+
+Given("OpenAI is having an outage") do
+  outage = { error: { message: "The server is overloaded." } }.to_json
+  use_ai_client(Ai::OpenAiClient.new(api_key: "test-key", transport: ->(*) { [ 503, outage ] }))
+end
+
 Given("the AI service is unavailable") do
   use_ai_client(Ai::FakeClient.new(error: Ai::Error.new("connection refused")))
 end
