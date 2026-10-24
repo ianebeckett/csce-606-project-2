@@ -95,6 +95,21 @@ RSpec.describe "Online Judge requests", type: :request do
     expect(response.body).to include("Judge Unavailable")
   end
 
+  it "restores starter code after blank submissions without rewriting history" do
+    sign_in(user)
+    problem = Problem.find_by!(slug: "contains-duplicate")
+
+    [ "", " \t\n" ].each do |code|
+      post problem_attempts_path(problem), params: { attempt: { code: code, language: "ruby" } }
+      attempt = user.attempts.order(:id).last
+      get problem_path(problem)
+
+      expect(response.body).to include(problem.starter_code)
+      expect(attempt.reload.code).to eq(code)
+      expect(attempt.judge_result).to eq("Runtime Error")
+    end
+  end
+
   it "shows submission times in the application time zone" do
     sign_in(user)
     problem = Problem.find_by!(slug: "contains-duplicate")

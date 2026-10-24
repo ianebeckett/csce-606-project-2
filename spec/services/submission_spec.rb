@@ -9,6 +9,19 @@ RSpec.describe Judge::Submission do
   end
   let(:runner) { instance_double(Judge::DockerRunner) }
 
+  it "records blank submissions as Runtime Error without running code" do
+    session = create_user.practice_sessions.create!(problem: problem, started_at: Time.current)
+    expect(runner).not_to receive(:call)
+
+    [ nil, "", " \t\n" ].each do |code|
+      submission = session.attempts.create!(code: code, language: "ruby")
+      expect(described_class.new(runner: runner).call(submission)).to equal(submission)
+      expect(submission.reload).to have_attributes(
+        code: code.to_s, judge_result: "Runtime Error", error_message: "Code can't be blank.",
+        passed_cases: 0, total_cases: problem.test_cases.count)
+    end
+  end
+
   it "returns the judged Attempt without changing the learning session or submitted code" do
     session = attempt.practice_session
     original_session = session.attributes
