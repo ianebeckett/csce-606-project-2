@@ -42,4 +42,48 @@ RSpec.describe PracticeSession do
       user.practice_sessions.create!(problem: problem, started_at: Time.current)
     end.to raise_error(ActiveRecord::RecordNotUnique)
   end
+
+  describe "Senior SWE coaching" do
+    let(:session) { user.practice_sessions.for_today(problem) }
+
+    it "starts at the problem stage, locked, with a senior engineer coach" do
+      expect(session.coaching_state).to eq("problem")
+      expect(session).to be_coaching_locked
+      expect(session.coach_persona).to eq("senior_swe")
+    end
+
+    it "advances one stage at a time and unlocks once the approach is correct" do
+      session.advance_coaching!
+      expect(session.coaching_state).to eq("approach")
+      expect(session).to be_coaching_locked
+
+      session.advance_coaching!
+      expect(session.coaching_state).to eq("complexity")
+      expect(session).not_to be_coaching_locked
+    end
+
+    it "stays at the complexity stage when advanced again" do
+      session.update!(coaching_state: "complexity")
+      session.advance_coaching!
+      expect(session.reload.coaching_state).to eq("complexity")
+    end
+
+    it "unlocks the editor when coaching is skipped" do
+      session.skip_coaching!
+      expect(session.coaching_state).to eq("skipped")
+      expect(session).not_to be_coaching_locked
+    end
+
+    it "does not change an unlocked session when coaching is skipped" do
+      session.update!(coaching_state: "complexity")
+      session.skip_coaching!
+      expect(session.reload.coaching_state).to eq("complexity")
+    end
+
+    it "rejects an unknown state or coach persona" do
+      expect(session.tap { |s| s.coaching_state = "done" }).not_to be_valid
+      expect(session.tap { |s| s.coaching_state = "problem"; s.coach_persona = "pirate" }).not_to be_valid
+      expect(session.tap { |s| s.coach_persona = "senior_grug" }).to be_valid
+    end
+  end
 end
