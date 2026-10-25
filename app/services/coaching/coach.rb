@@ -61,7 +61,7 @@ module Coaching
 
     def build_prompt(practice_session)
       problem = practice_session.problem
-      messages = practice_session.conversation_messages.chronological.last(HISTORY_LIMIT)
+      messages = practice_session.conversation_messages.coaching.chronological.last(HISTORY_LIMIT)
       "Problem: #{problem.title}\n#{problem.description}\n\nDialogue so far:\n#{fenced(messages, practice_session.coach_name)}"
     end
 

@@ -14,6 +14,7 @@ class Attempt < ApplicationRecord
   belongs_to :practice_session
   has_one :user, through: :practice_session
   has_one :problem, through: :practice_session
+  has_one :code_review_message, -> { where(phase: "code_review") }, class_name: "ConversationMessage"
 
   before_validation { self.code = code.to_s }
 

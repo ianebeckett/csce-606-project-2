@@ -10,7 +10,9 @@
 <h2>Submitted Ruby code</h2><pre class="saved-code"><code><%= @attempt.code %></code></pre>
 <% unless current_user.premium? %><p class="muted">AI code review is available to Premium members.</p><% end %>
 <div class="attempt-actions">
-  <% if current_user.premium? && @attempt.code.present? %>
+  <% if current_user.premium? && @attempt.code_review_message %>
+    <%= link_to "View AI code review", attempt_code_review_path(@attempt), class: "button" %>
+  <% elsif current_user.premium? && @attempt.code.present? %>
     <%= button_to "Get AI code review", attempt_code_review_path(@attempt), class: "button" %>
   <% end %>
   <%= link_to "Try this problem again", problem_path(@attempt.problem), class: "button" %>

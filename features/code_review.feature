@@ -14,6 +14,15 @@ Feature: US3 — AI Code Review
     Then I see the overall assessment and complexity
     And I see the feedback directly under line 2 of my code
 
+  Scenario: A saved review can be opened again later
+    Given I am signed in as a "Premium" member
+    And I have submitted a solution for "Contains Duplicate"
+    And the AI reviewer has feedback about line 2
+    When I request an AI code review of my submission
+    And I come back to the review from my submission
+    Then I see the feedback directly under line 2 of my code
+    And the AI reviewer was only asked once
+
   Scenario: Feedback about a line that does not exist is shown as general advice
     Given I am signed in as a "Premium" member
     And I have submitted a solution for "Contains Duplicate"

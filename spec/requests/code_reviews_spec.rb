@@ -17,6 +17,7 @@ RSpec.describe "AI code review requests", type: :request do
       use_ai_client(Ai::FakeClient.new(reply: ai_review_reply(suggestions: [ hash_set_tip ])))
 
       post attempt_code_review_path(attempt)
+      follow_redirect!
 
       expect(response).to have_http_status(:ok)
       body = response.body
@@ -32,6 +33,7 @@ RSpec.describe "AI code review requests", type: :request do
       use_ai_client(Ai::FakeClient.new(reply: ai_review_reply(suggestions: [ span ])))
 
       post attempt_code_review_path(attempt)
+      follow_redirect!
 
       expect(response.body).to include("Lines 1–3")
     end
@@ -41,6 +43,7 @@ RSpec.describe "AI code review requests", type: :request do
       use_ai_client(Ai::FakeClient.new(reply: ai_review_reply(suggestions: [ general ])))
 
       post attempt_code_review_path(attempt)
+      follow_redirect!
 
       expect(response.body).to include("General suggestions")
       expect(response.body).to include("Name the block variables clearly.")
@@ -62,9 +65,73 @@ RSpec.describe "AI code review requests", type: :request do
       use_ai_client(Ai::FakeClient.new(reply: ai_review_reply(suggestions: [ tip ])))
 
       post attempt_code_review_path(attempt)
+      follow_redirect!
 
       expect(response.body).not_to include("<script>alert(1)</script>")
       expect(response.body).to include("&lt;script&gt;")
+    end
+
+    it "saves the review as a code review message on the attempt" do
+      use_ai_client(Ai::FakeClient.new(reply: ai_review_reply(suggestions: [ hash_set_tip ])))
+
+      post attempt_code_review_path(attempt)
+
+      expect(response).to redirect_to(attempt_code_review_path(attempt))
+      saved = ConversationMessage.sole
+      expect(saved).to have_attributes(practice_session: attempt.practice_session, attempt: attempt, role: "assistant", phase: "code_review")
+      expect(JSON.parse(saved.content)).to include("summary" => "Correct, but the nested scan is quadratic.")
+    end
+
+    it "shows a saved review again without calling the AI" do
+      use_ai_client(Ai::FakeClient.new(reply: ai_review_reply(suggestions: [ hash_set_tip ])))
+      post attempt_code_review_path(attempt)
+      second = Ai::FakeClient.new(reply: ai_review_reply)
+      use_ai_client(second)
+
+      post attempt_code_review_path(attempt)
+      follow_redirect!
+
+      expect(second.last_prompt).to be_nil
+      expect(response.body).to include("Use a Set to make this O(n).")
+      expect(ConversationMessage.count).to eq(1)
+    end
+
+    it "links to the saved review from the attempt page" do
+      use_ai_client(Ai::FakeClient.new(reply: ai_review_reply))
+      post attempt_code_review_path(attempt)
+
+      get attempt_path(attempt)
+
+      expect(response.body).to include("View AI code review")
+      expect(response.body).not_to include("Get AI code review")
+    end
+
+    it "sends a visit to an unreviewed attempt back to the attempt page" do
+      get attempt_code_review_path(attempt)
+
+      expect(response).to redirect_to(attempt_path(attempt))
+    end
+
+    it "saves nothing when the AI fails" do
+      use_ai_client(Ai::FakeClient.new(error: Ai::Error.new("timeout")))
+
+      post attempt_code_review_path(attempt)
+
+      expect(ConversationMessage.count).to eq(0)
+    end
+
+    it "keeps saved reviews out of the Socratic coach's prompt and chat" do
+      use_ai_client(Ai::FakeClient.new(reply: ai_review_reply))
+      post attempt_code_review_path(attempt)
+      coach = Ai::FakeClient.new(reply: { message: "What is the input size?", advance: false }.to_json)
+      use_ai_client(coach)
+
+      post problem_coaching_messages_path(attempt.problem), params: { conversation_message: { content: "I would use a hash set." } }
+      get problem_path(attempt.problem)
+
+      expect(coach.last_prompt).to include("I would use a hash set.")
+      expect(coach.last_prompt).not_to include("nested scan is quadratic")
+      expect(response.body).not_to include("nested scan is quadratic")
     end
 
     it "keeps the attempt and explains when the AI service fails" do
@@ -109,6 +176,7 @@ RSpec.describe "AI code review requests", type: :request do
       use_ai_client(Ai::FakeClient.new(reply: ai_review_reply.encode("UTF-16LE")))
 
       post attempt_code_review_path(attempt)
+      follow_redirect!
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Correct, but the nested scan is quadratic.")
@@ -145,6 +213,14 @@ RSpec.describe "AI code review requests", type: :request do
       expect(response).to redirect_to(attempt_path(attempt))
       expect(flash[:alert]).to eq("There's no code to review yet.")
       expect(client.last_prompt).to be_nil
+    end
+
+    it "cannot view another member's saved review" do
+      other = create_attempt(create_user(email: "other@example.com", role: "Premium"))
+
+      get attempt_code_review_path(other)
+
+      expect(response).to have_http_status(:not_found)
     end
 
     it "cannot review another member's attempt" do

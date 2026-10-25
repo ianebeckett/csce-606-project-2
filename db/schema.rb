@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_23_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_25_000000) do
   create_table "attempts", force: :cascade do |t|
     t.integer "practice_session_id", null: false
     t.text "code", null: false
@@ -33,6 +33,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_23_000000) do
     t.text "content", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "phase", default: "coaching", null: false
     t.index ["attempt_id"], name: "index_conversation_messages_on_attempt_id"
     t.index ["practice_session_id"], name: "index_conversation_messages_on_practice_session_id"
   end
