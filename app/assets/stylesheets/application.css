@@ -115,3 +115,12 @@ th { color: var(--muted); font-size: .75rem; }
 .skip-link:focus { width: auto; height: auto; clip: auto; padding: .7rem 1rem; background: var(--accent); color: var(--bg); z-index: 10; }
 @media (max-width: 1000px) { .problem-row { grid-template-columns: minmax(100px, 1fr) auto auto; } .problem-number { display: none; } .practice-link { grid-column: 1 / -1; } .workspace { grid-template-columns: 1fr; } .account-label { display: none; } }
 @media (max-width: 700px) { .site-header { align-items: flex-start; flex-direction: column; } nav { gap: 1rem; } .page-shell { padding-top: 2rem; } .page-heading { align-items: flex-start; } .stat-card { min-width: auto; padding: 1rem; } .catalog-layout { grid-template-columns: 1fr; gap: 1rem; } .topic-panel { display: flex; gap: .3rem; flex-wrap: wrap; } .topic-panel h2, .topic-panel > p { width: 100%; } .topic-link { font-size: .75rem; padding: .5rem; } .topic-number { display: none; } .problem-row { padding: 1rem; gap: .5rem; } .problem-number { display: none; } .description-panel { padding: 1.5rem; } }
+.work-column { display: grid; gap: 1.5rem; }
+.coach-panel { border: 1px solid var(--border); background: var(--panel); border-radius: 12px; overflow: hidden; }
+.coach-body { padding: 1.5rem; }
+.coach-step { color: var(--muted); }
+.conversation { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: .75rem; }
+.conversation-message { padding: .75rem 1rem; border-radius: 8px; background: var(--example-bg); border-left: 2px solid var(--border); }
+.conversation-message.assistant { border-left-color: var(--accent); }
+.conversation-message p { margin: .25rem 0 0; }
+.locked-note { padding: 1.5rem; margin: 0; color: var(--muted); }

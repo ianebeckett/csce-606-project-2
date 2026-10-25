@@ -74,4 +74,22 @@ RSpec.describe "Coaching messages", type: :request do
       expect(response.body).to include("Ruby source code")
     end
   end
+
+  describe "the problem page" do
+    it "tells a Free member to upgrade for Socratic code coaching" do
+      sign_in(create_user(email: "free@example.com", role: "Free"))
+      get problem_path(problem)
+
+      expect(response.body).to include("Upgrade to Premium to use Socratic code coaching")
+      expect(response.body).not_to include("Your message")
+    end
+
+    it "offers a Premium member the Ctrl + Enter send shortcut" do
+      sign_in(premium)
+      get problem_path(problem)
+
+      expect(response.body).to include("Send (Ctrl + Enter)", "data-submit-on-ctrl-enter", 'type="importmap"')
+      expect(response.body).not_to include("Upgrade to Premium")
+    end
+  end
 end
