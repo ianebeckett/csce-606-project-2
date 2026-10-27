@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_22_020000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_24_120000) do
   create_table "attempts", force: :cascade do |t|
     t.integer "practice_session_id", null: false
     t.text "code", null: false
@@ -24,6 +24,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_020000) do
     t.index ["practice_session_id"], name: "index_attempts_on_practice_session_id"
     t.check_constraint "language = 'ruby'", name: "attempts_ruby_only"
     t.check_constraint "passed_cases >= 0 AND total_cases >= passed_cases", name: "attempts_case_counts"
+  end
+
+  create_table "conversation_messages", force: :cascade do |t|
+    t.integer "attempt_id", null: false
+    t.string "role", null: false
+    t.text "content", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["attempt_id"], name: "index_conversation_messages_on_attempt_id"
   end
 
   create_table "practice_sessions", force: :cascade do |t|
@@ -57,6 +66,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_020000) do
     t.datetime "updated_at", null: false
     t.index ["slug"], name: "index_problems_on_slug", unique: true
     t.index ["topic_id"], name: "index_problems_on_topic_id"
+  end
+
+  create_table "review_schedules", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "problem_id", null: false
+    t.date "scheduled_for", null: false
+    t.datetime "reviewed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["problem_id"], name: "index_review_schedules_on_problem_id"
+    t.index ["user_id"], name: "index_review_schedules_on_user_id"
   end
 
   create_table "test_cases", force: :cascade do |t|
@@ -100,9 +120,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_020000) do
   end
 
   add_foreign_key "attempts", "practice_sessions"
+  add_foreign_key "conversation_messages", "attempts"
   add_foreign_key "practice_sessions", "problems"
   add_foreign_key "practice_sessions", "users"
   add_foreign_key "problems", "topics"
+  add_foreign_key "review_schedules", "problems"
+  add_foreign_key "review_schedules", "users"
   add_foreign_key "test_cases", "problems"
   add_foreign_key "topic_prerequisites", "topics"
   add_foreign_key "topic_prerequisites", "topics", column: "prerequisite_topic_id"

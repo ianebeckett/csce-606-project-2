@@ -4,6 +4,7 @@ class PracticeSession < ApplicationRecord
   belongs_to :user
   belongs_to :problem
   has_many :attempts, dependent: :destroy
+  has_many :conversation_messages, through: :attempts
 
   before_validation { self.practice_date = started_at&.in_time_zone&.to_date }
 

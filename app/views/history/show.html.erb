@@ -1,0 +1,35 @@
+<% content_for :title, "#{@attempt.problem.title} history · Code Coach" %>
+<p><%= link_to "Back to learning history", history_index_path %></p>
+<h1><%= @attempt.problem.title %></h1>
+<p>Topic: <%= @attempt.problem.topic.name %></p>
+<p>Submitted: <%= @attempt.created_at.strftime(ApplicationHelper::SUBMISSION_TIME_FORMAT) %></p>
+
+<section aria-labelledby="attempt-result">
+  <h2 id="attempt-result">Judge result</h2>
+  <p><%= @attempt.judge_result %></p>
+  <p><%= @attempt.passed_cases %> / <%= @attempt.total_cases %> test cases passed</p>
+  <% if @attempt.error_message.present? %>
+    <pre><%= @attempt.error_message %></pre>
+  <% end %>
+</section>
+
+<section aria-labelledby="submitted-code">
+  <h2 id="submitted-code">Submitted code</h2>
+  <pre><code><%= @attempt.code %></code></pre>
+</section>
+
+<section aria-labelledby="conversation">
+  <h2 id="conversation">AI dialogue</h2>
+  <% if @attempt.conversation_messages.empty? %>
+    <p>No dialogue for this attempt.</p>
+  <% else %>
+    <ol>
+      <% @attempt.conversation_messages.order(:created_at, :id).each do |message| %>
+        <li>
+          <p><strong><%= message.role.capitalize %></strong></p>
+          <p><%= message.content %></p>
+        </li>
+      <% end %>
+    </ol>
+  <% end %>
+</section>
