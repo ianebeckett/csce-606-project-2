@@ -5,6 +5,7 @@ class User < ApplicationRecord
   has_secure_password
   has_many :practice_sessions, dependent: :destroy
   has_many :attempts, through: :practice_sessions
+  has_many :review_schedules, dependent: :destroy # student has multiple scheduled reviews
 
   normalizes :email, with: ->(email) { email.strip.downcase }
   validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }

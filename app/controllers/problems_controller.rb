@@ -7,6 +7,11 @@ class ProblemsController < ApplicationController
 
     available_topics = @topic || roadmap.topics.select { |topic| roadmap.unlocked?(topic) }
     @problems = Problem.includes(:topic).joins(:topic).where(topic: available_topics).order("topics.position", :title)
+
+    # Get the logged-in student's reviews due today or earlier
+    @due_reviews = current_user.review_schedules.due
+                               .includes(:problem)
+                               .order(:next_review_date)
   end
 
   def show

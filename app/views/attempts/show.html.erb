@@ -15,3 +15,36 @@
   <% end %>
   <%= link_to "Try this problem again", problem_path(@attempt.problem), class: "button" %>
 </div>
+
+
+<% practice = @attempt.practice_session %>
+
+<% if [Attempt::ACCEPTED, Attempt::WRONG_ANSWER].include?(@attempt.judge_result) &&
+      practice.status != "completed" %>
+
+  <section aria-labelledby="review-rating-title">
+    <h2 id="review-rating-title">Complete Your Practice</h2>
+
+    <p>How well did you understand this problem?</p>
+
+    <%= form_with url: rate_practice_session_path(practice),
+                  method: :patch,
+                  local: true do |form| %>
+
+      <%= form.label :review_rating, "Your performance rating" %>
+
+      <%= form.select :review_rating,
+                      [
+                        ["1 - Very difficult", 1],
+                        ["2 - Difficult", 2],
+                        ["3 - Moderate", 3],
+                        ["4 - Easy", 4],
+                        ["5 - Very easy", 5]
+                      ],
+                      { prompt: "Select your rating" },
+                      { required: true } %>
+
+      <%= form.submit "Complete Practice" %>
+    <% end %>
+  </section>
+<% end %>
