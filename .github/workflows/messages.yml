@@ -45,7 +45,7 @@ jobs:
             for (const {sha, commit, parents} of commits) {
               const [subject, separator, ...lines] = commit.message.replace(/\r\n/g, '\n').split('\n');
               const label = sha.slice(0, 7);
-              if ((parents || []).length > 1 || subject.startsWith('Merge ')) continue;
+              if (/^Merge (branch|pull request)\b/.test(subject)) continue;
               checkSubject(subject, label);
               if (separator !== '' || !lines.join('\n').trim()) {
                 errors.push(`${label}: include a blank line after the subject and a body explaining what and why.`);

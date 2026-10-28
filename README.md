@@ -41,10 +41,43 @@ Never commit the key. In production, set it in the hosting provider's environmen
 
 ### Premium accounts
 
-AI code review is limited to Premium members, and new accounts start as Free. To make a local account Premium:
+Premium is the account role that grants access to AI features. New accounts
+start as Free.
+
+#### Local grader account
+
+After completing the setup under **Run**, create a Premium demo account in the
+local development database. Run this from the project directory:
 
 ```sh
-bin/rails runner 'User.find_by!(email: "you@example.com").update!(role: "Premium")'
+bin/rails runner -e development '
+  user = User.find_or_initialize_by(email: "grader@example.com")
+  user.update!(role: "Premium", password: "CodeCoach-Grader-2026!")
+  puts "Premium account ready: #{user.email}"
+'
+```
+
+Open <http://127.0.0.1:3000/session/new> while `make run` is running and sign in:
+
+- **Email:** `grader@example.com`
+- **Password:** `CodeCoach-Grader-2026!`
+
+These are local demo credentials. The command creates the account if missing;
+running it again restores its Premium role and demo password while preserving
+its practice history. The account is stored in the local database, so a grader
+using a fresh clone must run the command too.
+
+To try AI code review, configure `OPENAI_API_KEY` as described above, submit a
+solution, and select **Get AI code review** on the attempt page. The Premium
+role alone does not configure the AI service.
+
+#### Promote an existing account
+
+To keep your own account and password, register through the app, then run this
+with your registered email and refresh the page:
+
+```sh
+bin/rails runner -e development 'User.find_by!(email: "you@example.com").update!(role: "Premium")'
 ```
 
 ## Tests and quality checks
