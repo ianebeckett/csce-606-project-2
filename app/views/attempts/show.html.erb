@@ -17,10 +17,16 @@
 </div>
 
 
+
 <% practice = @attempt.practice_session %>
 
-<% if [Attempt::ACCEPTED, Attempt::WRONG_ANSWER].include?(@attempt.judge_result) &&
-      practice.status != "completed" %>
+<% latest_attempt = practice.attempts.order(created_at: :desc, id: :desc).first %>
+<% already_rated = practice.review_scheduled_at.present? &&
+                   @attempt.created_at <= practice.review_scheduled_at %>
+<% if @attempt.id == latest_attempt&.id &&
+      [Attempt::ACCEPTED, Attempt::WRONG_ANSWER].include?(@attempt.judge_result) &&
+      !already_rated %>
+
 
   <section aria-labelledby="review-rating-title">
     <h2 id="review-rating-title">Complete Your Practice</h2>
@@ -30,6 +36,7 @@
     <%= form_with url: rate_practice_session_path(practice),
                   method: :patch,
                   local: true do |form| %>
+      <%= form.hidden_field :attempt_id, value: @attempt.id %>
 
       <%= form.label :review_rating, "Your performance rating" %>
 

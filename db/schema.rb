@@ -10,8 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_26_200603) do
-
+ActiveRecord::Schema[8.1].define(version: 2026_10_28_213854) do
   create_table "attempts", force: :cascade do |t|
     t.integer "practice_session_id", null: false
     t.text "code", null: false
@@ -52,6 +51,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_200603) do
     t.datetime "review_scheduled_at"
     t.string "coaching_state", default: "problem", null: false
     t.string "coach_persona", default: "senior_swe", null: false
+    t.integer "review_base_interval_days"
     t.index ["problem_id"], name: "index_practice_sessions_on_problem_id"
     t.index ["user_id", "problem_id", "practice_date"], name: "index_practice_sessions_on_user_problem_date", unique: true
     t.index ["user_id"], name: "index_practice_sessions_on_user_id"

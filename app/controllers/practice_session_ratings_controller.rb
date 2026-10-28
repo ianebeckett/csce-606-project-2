@@ -2,21 +2,26 @@
 class PracticeSessionRatingsController < ApplicationController
   def update
     practice = current_user.practice_sessions.find(params[:id])
-
     # Read the student's performance rating
     rating = Integer(params[:review_rating], exception: false)
     unless (1..5).cover?(rating)
       return redirect_to problems_path, alert: "Select a rating from 1 to 5."
     end
-    if practice.status == "completed"
-      return redirect_to problems_path, alert: "This session is already completed."
-    end
-    valid_attempt = practice.attempts.where(
-      judge_result: [ Attempt::ACCEPTED, Attempt::WRONG_ANSWER ]
-    ).exists?
 
-    unless valid_attempt
+    attempt = practice.attempts.find_by(id: params[:attempt_id])
+    latest_attempt = practice.attempts.order(created_at: :desc, id: :desc).first
+
+    unless attempt && attempt.id == latest_attempt&.id
+      return redirect_to problems_path, alert: "Only the latest attempt can be rated."
+    end
+
+    unless [ Attempt::ACCEPTED, Attempt::WRONG_ANSWER ].include?(attempt.judge_result)
       return redirect_to problems_path, alert: "Complete a coding attempt first."
+    end
+
+    if practice.review_scheduled_at.present? &&
+       attempt.created_at <= practice.review_scheduled_at
+      return redirect_to problems_path, alert: "This attempt has already been rated."
     end
 
     # Save the rating and review schedule together
