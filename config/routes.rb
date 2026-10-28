@@ -11,4 +11,5 @@ Rails.application.routes.draw do
   resources :attempts, only: [ :index, :show ] do
     resource :code_review, only: :create
   end
+  resources :history, only: [ :index, :show ]
 end
