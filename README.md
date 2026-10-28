@@ -12,6 +12,8 @@
 
 1. Clone this repository.
 2. Start Docker and confirm `docker info` succeeds without `sudo`.
+   On Linux, after joining the `docker` group, run `newgrp docker` or log out
+   and back in, then retry. See [Docker permissions](#docker-permissions-on-linux).
 3. Run `make run` from the project directory to start local development.
 
 For an existing database, run `bin/rails db:migrate db:seed` to install the
