@@ -42,9 +42,10 @@ jobs:
               ...context.repo, pull_number: pr.number, per_page: 100
             });
             if (commits.length !== pr.commits) errors.push('Could not check every PR commit.');
-            for (const {sha, commit} of commits) {
+            for (const {sha, commit, parents} of commits) {
               const [subject, separator, ...lines] = commit.message.replace(/\r\n/g, '\n').split('\n');
               const label = sha.slice(0, 7);
+              if ((parents || []).length > 1 || subject.startsWith('Merge ')) continue;
               checkSubject(subject, label);
               if (separator !== '' || !lines.join('\n').trim()) {
                 errors.push(`${label}: include a blank line after the subject and a body explaining what and why.`);
