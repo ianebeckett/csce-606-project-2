@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   resource :registration, only: [ :new, :create ]
   resources :problems, only: [ :index, :show ] do
     resources :attempts, only: :create
+    resources :coaching_messages, only: :create
   end
   resources :attempts, only: [ :index, :show ] do
     resource :code_review, only: :create

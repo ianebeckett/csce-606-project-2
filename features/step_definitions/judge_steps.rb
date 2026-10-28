@@ -19,6 +19,7 @@ Then("no submission has been created") { expect(Attempt.count).to eq(0) }
 When("I submit a correct Ruby solution for {string}") do |slug|
   @problem = Problem.find_by!(slug: slug)
   @submitted_code = RubySolutions::CORRECT.fetch(slug)
+  finish_coaching(@user, @problem)
   visit problem_path(@problem)
   fill_in "Ruby source code", with: @submitted_code
   click_button "Submit Ruby solution"
@@ -49,6 +50,7 @@ When("I submit a Ruby solution with {string}") do |failure|
     "an abrupt exit" => "def contains_duplicate(nums); exit!(125); end",
     "an endless loop" => "def contains_duplicate(nums); loop { sleep 0.1 }; end"
   }.fetch(failure)
+  finish_coaching(@user, @problem)
   visit problem_path(@problem)
   fill_in "Ruby source code", with: @submitted_code
   click_button "Submit Ruby solution"

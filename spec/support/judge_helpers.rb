@@ -11,6 +11,12 @@ module JudgeHelpers
     post session_path, params: { email: user.email, password: "correct-horse-battery" }
   end
 
+  # Premium members explain their approach to the coach before coding (US4),
+  # so judge scenarios start after that conversation.
+  def finish_coaching(user, problem)
+    user.practice_sessions.for_today(problem).update!(coaching_state: "complexity") if user.premium?
+  end
+
   def complete_prerequisites(user, topic)
     topic.prerequisites.each do |prerequisite|
       complete_prerequisites(user, prerequisite)
