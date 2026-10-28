@@ -20,6 +20,7 @@ jobs:
       COVERAGE_ROOT: coverage/ci-${{ github.run_id }}-${{ github.run_attempt }}
       CUCUMBER_PUBLISH_ENABLED: "false"
       RUBOCOP_CACHE_ROOT: tmp/rubocop
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6

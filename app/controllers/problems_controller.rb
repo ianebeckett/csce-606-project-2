@@ -21,5 +21,6 @@ class ProblemsController < ApplicationController
     previous = current_user.attempts.joins(:practice_session).where(practice_sessions: { problem_id: @problem.id })
       .order(created_at: :desc, id: :desc).first
     @attempt = Attempt.new(code: previous&.code.presence || @problem.starter_code, language: Attempt::LANGUAGE)
+    @coaching_session = current_user.practice_sessions.for_today(@problem) if current_user.premium?
   end
 end

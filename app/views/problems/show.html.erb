@@ -13,6 +13,17 @@ Returns:   <%= JSON.generate(test_case.expected_output) %></pre></div>
     <% end %>
     <p class="small"><%= link_to "LeetCode", @problem.source_url, rel: "noreferrer" %></p>
   </section>
+  <div class="work-column">
+  <%= render "problems/coach", practice_session: @coaching_session, problem: @problem if @coaching_session %>
+  <% unless current_user.premium? %>
+  <p class="notice">Upgrade to Premium to use Socratic code coaching: explain your approach to a coach before you write code.</p>
+  <% end %>
+  <% if @coaching_session&.coaching_locked? %>
+  <section class="editor-panel locked-editor" aria-labelledby="editor-title">
+    <div class="panel-title"><h2 id="editor-title">Your solution</h2></div>
+    <p class="locked-note">The editor unlocks once <%= @coaching_session.coach_name %> agrees with your approach.</p>
+  </section>
+  <% else %>
   <section class="editor-panel" aria-labelledby="editor-title">
     <div class="panel-title"><h2 id="editor-title">Your solution</h2><span class="badge ruby">Ruby <%= ApplicationHelper::EXECUTOR_RUBY_VERSION %></span></div>
     <%= render "shared/errors", record: @attempt %>
@@ -27,4 +38,6 @@ Returns:   <%= JSON.generate(test_case.expected_output) %></pre></div>
       <% end %>
     <% end %>
   </section>
+  <% end %>
+  </div>
 </div>
