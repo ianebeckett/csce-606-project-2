@@ -1,5 +1,6 @@
 class Topic < ApplicationRecord
   has_many :problems, dependent: :restrict_with_error
+  has_many :review_schedules, through: :problems
   has_many :topic_prerequisites, dependent: :destroy
   has_many :prerequisites, through: :topic_prerequisites, source: :prerequisite_topic
   has_many :dependent_prerequisites, class_name: "TopicPrerequisite", foreign_key: :prerequisite_topic_id, dependent: :destroy

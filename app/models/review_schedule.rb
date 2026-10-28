@@ -1,8 +1,14 @@
 class ReviewSchedule < ApplicationRecord
   belongs_to :user
   belongs_to :problem
+  before_validation :sync_review_dates
 
-  # Every schedule must have a review date, at least 1 day
+  def sync_review_dates
+    self.scheduled_for ||= next_review_date
+    self.next_review_date ||= scheduled_for
+  end
+
+  validates :scheduled_for, presence: true
   validates :next_review_date, presence: true
   validates :interval_days,
             numericality: { only_integer: true, greater_than: 0 }
@@ -34,6 +40,8 @@ class ReviewSchedule < ApplicationRecord
     end
 
     self.next_review_date = Date.current + interval_days.days
+    self.scheduled_for = next_review_date
     save!
   end
+  private
 end

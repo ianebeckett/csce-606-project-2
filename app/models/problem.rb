@@ -13,7 +13,7 @@ class Problem < ApplicationRecord
 
   has_many :test_cases, -> { order(:position) }, dependent: :destroy
   has_many :practice_sessions, dependent: :restrict_with_error
-  has_many :review_schedules, dependent: :destroy
+  has_many :review_schedules, dependent: :restrict_with_error
   belongs_to :topic
 
   validates :title, :description, :starter_code, presence: true

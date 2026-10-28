@@ -81,6 +81,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_28_213854) do
     t.integer "interval_days", default: 1, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.date "scheduled_for"
+    t.datetime "reviewed_at"
     t.index ["problem_id"], name: "index_review_schedules_on_problem_id"
     t.index ["user_id", "problem_id"], name: "index_review_schedules_on_user_id_and_problem_id", unique: true
     t.index ["user_id"], name: "index_review_schedules_on_user_id"
