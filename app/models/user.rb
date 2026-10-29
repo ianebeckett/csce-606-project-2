@@ -5,6 +5,7 @@ class User < ApplicationRecord
   has_secure_password
   has_many :practice_sessions, dependent: :destroy
   has_many :attempts, through: :practice_sessions
+
   has_many :conversation_messages, through: :practice_sessions
   has_many :review_schedules, dependent: :destroy
 
