@@ -3,13 +3,24 @@ class CodeReviewsController < ApplicationController
 
   before_action :set_attempt
   before_action :require_premium
-  before_action :require_code
+  before_action :require_code, only: :create
+
+  def show
+    saved = @attempt.code_review_message
+    return redirect_to attempt_path(@attempt) unless saved
+
+    @review = CodeReview::Parser.parse(saved.content, code: @attempt.code)
+  end
 
   def create
-    @review = CodeReview::Reviewer.new(client: Ai.client).call(
+    return redirect_to attempt_code_review_path(@attempt) if @attempt.code_review_message
+
+    review = CodeReview::Reviewer.new(client: Ai.client).call(
       code: @attempt.code, language: @attempt.language, problem: @attempt.problem.description,
       judge_result: "#{@attempt.judge_result} (#{@attempt.passed_cases}/#{@attempt.total_cases} test cases passed)")
-    render :show
+    @attempt.practice_session.conversation_messages.create!(
+      attempt: @attempt, role: "assistant", phase: "code_review", content: review.to_json)
+    redirect_to attempt_code_review_path(@attempt)
   rescue CodeReview::Error => e
     Rails.logger.warn("AI code review failed for attempt #{@attempt.id}: #{e.message}")
     redirect_to attempt_path(@attempt), alert: UNAVAILABLE_MESSAGE

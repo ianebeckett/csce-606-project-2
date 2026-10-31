@@ -3,7 +3,7 @@
   <div class="coach-body">
     <p class="coach-step"><%= coaching_step_hint(practice_session) %></p>
     <ol class="conversation">
-      <% practice_session.conversation_messages.chronological.each do |message| %>
+      <% practice_session.conversation_messages.coaching.chronological.each do |message| %>
         <li class="conversation-message <%= message.role %>">
           <strong><%= message.role == "user" ? "You" : practice_session.coach_name %></strong>
           <%= simple_format(message.content) %>

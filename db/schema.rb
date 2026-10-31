@@ -33,6 +33,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_28_213854) do
     t.text "content", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "phase", default: "coaching", null: false
     t.index ["attempt_id"], name: "index_conversation_messages_on_attempt_id"
     t.index ["practice_session_id"], name: "index_conversation_messages_on_practice_session_id"
   end
@@ -48,9 +49,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_28_213854) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.date "practice_date", null: false
-    t.datetime "review_scheduled_at"
     t.string "coaching_state", default: "problem", null: false
     t.string "coach_persona", default: "senior_swe", null: false
+    t.datetime "review_scheduled_at"
     t.integer "review_base_interval_days"
     t.index ["problem_id"], name: "index_practice_sessions_on_problem_id"
     t.index ["user_id", "problem_id", "practice_date"], name: "index_practice_sessions_on_user_problem_date", unique: true

@@ -1,14 +1,17 @@
 class ConversationMessage < ApplicationRecord
   ROLES = %w[user assistant].freeze
+  PHASES = %w[coaching code_review].freeze
 
   belongs_to :practice_session
   belongs_to :attempt, optional: true
 
   validates :role, inclusion: { in: ROLES }
+  validates :phase, inclusion: { in: PHASES }
   validates :content, presence: true
   validate :attempt_in_same_session
 
   scope :chronological, -> { order(:created_at, :id) }
+  scope :coaching, -> { where(phase: "coaching") }
 
   private
 

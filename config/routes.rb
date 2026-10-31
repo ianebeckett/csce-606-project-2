@@ -18,7 +18,7 @@ Rails.application.routes.draw do
     resources :coaching_messages, only: :create
   end
   resources :attempts, only: [ :index, :show ] do
-    resource :code_review, only: :create
+    resource :code_review, only: [ :show, :create ]
   end
   resources :history, only: [ :index, :show ]
 end

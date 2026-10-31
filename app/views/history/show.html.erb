@@ -16,11 +16,14 @@
 <section aria-labelledby="submitted-code">
   <h2 id="submitted-code">Submitted code</h2>
   <pre><code><%= @attempt.code %></code></pre>
+  <% if @attempt.code_review_message %>
+    <p><%= link_to "View AI code review", attempt_code_review_path(@attempt) %></p>
+  <% end %>
 </section>
 
 <section aria-labelledby="conversation">
   <h2 id="conversation">AI dialogue</h2>
-  <% messages = @attempt.practice_session.conversation_messages.chronological %>
+  <% messages = @attempt.practice_session.conversation_messages.coaching.chronological %>
   <% if messages.empty? %>
     <p>No dialogue for this practice session.</p>
   <% else %>

@@ -42,6 +42,18 @@ When("I request an AI code review without the button") do
   page.driver.submit(:post, attempt_code_review_path(@attempt), {})
 end
 
+When("I come back to the review from my submission") do
+  @second_ai_client = Ai::FakeClient.new(reply: ai_review_reply)
+  use_ai_client(@second_ai_client)
+  visit attempt_path(@attempt)
+  click_link "View AI code review"
+end
+
+Then("the AI reviewer was only asked once") do
+  expect(@second_ai_client.last_prompt).to be_nil
+  expect(@attempt.reload.code_review_message).to be_present
+end
+
 Then("I see the overall assessment and complexity") do
   expect(page).to have_content("Correct, but the nested scan is quadratic.")
   expect(page).to have_content("Time: O(n^2)")
