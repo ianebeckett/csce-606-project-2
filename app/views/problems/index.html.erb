@@ -24,6 +24,36 @@
     <% end %>
   </aside>
   <section class="problem-panel" aria-labelledby="problem-list-title">
+    <!-- Spaced Repetition: Reviews due for the logged-in student -->
+    <section aria-labelledby="due-reviews-title">
+      <div class="panel-title">
+        <h2 id="due-reviews-title">Due Reviews</h2>
+      </div>
+      <% if @due_reviews.empty? %>
+        <!-- Empty state for students without due reviews -->
+        <p class="empty-state">
+          No problems are due for review.
+        </p>
+      <% else %>
+        <% @due_reviews.each do |review| %>
+          <article class="problem-row">
+            <div>
+              <h3>
+                <%= link_to review.problem.title,
+                            problem_path(review.problem) %>
+              </h3>
+              <p class="muted small">
+                Due: <%= review.next_review_date.strftime("%b %d, %Y") %>
+              </p>
+            </div>
+            <%= link_to "Review Now",
+                        problem_path(review.problem),
+                        class: "practice-link" %>
+          </article>
+        <% end %>
+      <% end %>
+    </section>
+
     <div class="panel-title"><h2 id="problem-list-title"><%= @topic&.name || "Unlocked problems" %></h2><span class="badge ruby">Ruby only</span></div>
     <% if @problems.empty? %><p class="empty-state"><%= @topic ? "No problems are available in this topic yet." : "No unlocked problems are available yet." %></p><% end %>
     <% @problems.each_with_index do |problem, index| %>

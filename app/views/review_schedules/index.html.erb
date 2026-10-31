@@ -1,0 +1,37 @@
+<h1>Problems Due for Review</h1>
+
+<p>
+  Practice previously solved problems to strengthen your understanding.
+</p>
+
+<% if @due_reviews.any? %>
+  <table>
+    <thead>
+    <tr>
+      <th scope="col">Problem</th>
+      <th scope="col">Difficulty</th>
+      <th scope="col">Review Date</th>
+      <th scope="col">Action</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <% @due_reviews.each do |review| %>
+      <tr>
+        <!-- Display the coding problem's title -->
+        <td><%= review.problem.title %></td>
+        <td><%= review.problem.difficulty %></td>
+        <td>
+          <%= review.next_review_date.strftime("%b %d, %Y") %>
+        </td>
+        <td>
+          <%= link_to "Practice Now",
+                      problem_path(review.problem.slug) %>
+        </td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p>No problems are due for review. Great job!</p>
+<% end %>

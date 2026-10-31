@@ -31,8 +31,13 @@ module Judge
 
     private
 
+
     def save_result(attempt, verdict, message = nil)
-      attempt.update!(judge_result: verdict, error_message: message)
+      # Save the result of the student's coding attempt
+      attempt.update!(
+        judge_result: verdict,
+        error_message: message
+      )
       attempt
     end
 

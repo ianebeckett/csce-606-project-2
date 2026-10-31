@@ -106,6 +106,17 @@ RSpec.describe "AI code review requests", type: :request do
       expect(response.body).not_to include("Get AI code review")
     end
 
+    it "links to the saved review from learning history instead of listing it as dialogue" do
+      use_ai_client(Ai::FakeClient.new(reply: ai_review_reply))
+      post attempt_code_review_path(attempt)
+
+      get history_path(attempt)
+
+      expect(response.body).to include(attempt_code_review_path(attempt))
+      expect(response.body).not_to include("nested scan is quadratic")
+      expect(response.body).to include("No dialogue for this practice session.")
+    end
+
     it "sends a visit to an unreviewed attempt back to the attempt page" do
       get attempt_code_review_path(attempt)
 
