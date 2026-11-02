@@ -14,7 +14,7 @@
 ## Progress Toward the Project Goal
 
 - Completed identified MVP features
-- We need more features for MVP (see “Changes Needed”) section below
+- We need more features for MVP; see section below
 
 ## What to do Next/Backlog Adjustment
 
