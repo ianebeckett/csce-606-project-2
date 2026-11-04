@@ -1,5 +1,10 @@
 When("I open the roadmap") { visit problems_path }
 
+When("I open the roadmap after judging finishes") do
+  perform_enqueued_jobs
+  visit problems_path
+end
+
 When("I select the {string} topic") do |name|
   within(".topic-panel") { click_link name, exact: true }
 end

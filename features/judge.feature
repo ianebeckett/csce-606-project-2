@@ -11,10 +11,22 @@ Feature: US7 — Online Judge & Error Recovery
     Then I am asked to sign in
     And no submission has been created
 
+  Scenario: Retry with my code after the judge reaches capacity
+    Given I am signed in as a "Free" member
+    And the judge has reached its submission limit
+    When I submit a correct Ruby solution for "contains-duplicate"
+    Then I am told when to retry without losing my code
+    When the earlier submissions finish
+    And I submit my solution again
+    Then I first see a "Pending" result
+    And I see an estimated wait before judging starts
+
   Scenario Outline: Solve a real problem using Ruby without JavaScript
     Given I am signed in as a "<role>" member
     And I have completed the prerequisites for "<slug>"
     When I submit a correct Ruby solution for "<slug>"
+    Then I first see a "Pending" result
+    When judging finishes
     Then I see an "Accepted" result with every predefined case passed
     And my submitted code is preserved in my personal history
     Examples:
@@ -29,6 +41,8 @@ Feature: US7 — Online Judge & Error Recovery
   Scenario Outline: Recover from a Ruby submission failure
     Given I am signed in as a "Free" member
     When I submit a Ruby solution with "<failure>"
+    Then I first see a "Pending" result
+    When judging finishes
     Then I see the "<verdict>" verdict and a passed-case count
     And I can still open the problem and read my submitted code
     Examples:
@@ -57,6 +71,8 @@ Feature: US7 — Online Judge & Error Recovery
   Scenario: Keep an empty Ruby submission in my history
     Given I am signed in as a "Free" member
     When I submit an empty Ruby solution
+    Then I first see a "Pending" result
+    When judging finishes
     Then I see the "Runtime Error" verdict and a passed-case count
     And the page explains that code is required
     And my submitted code is preserved in my personal history

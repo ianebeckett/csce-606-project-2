@@ -1,10 +1,64 @@
 require "rails_helper"
 
 RSpec.describe "Online Judge requests", type: :request do
+  include ActiveJob::TestHelper
   include ActiveSupport::Testing::TimeHelpers
 
   before { seed_judge }
   let(:user) { create_user }
+
+  it "rejects a full shared queue without saving or enqueueing the new source" do
+    stub_const("Judge::Queue::MAX_PENDING", 2)
+    problem = Problem.first
+    other = create_user(email: "other@example.com")
+    session = other.practice_sessions.for_today(problem)
+    session.attempts.create!(code: "private source", language: "ruby", total_cases: 6,
+      judging_started_at: 10.seconds.ago)
+    session.attempts.create!(code: "other pending source", language: "ruby", total_cases: 6)
+    sign_in(user)
+    code = "def contains_duplicate(nums); nums.uniq.length < nums.length; end"
+
+    expect do
+      post problem_attempts_path(problem), params: { attempt: { code: code, language: "ruby" } }
+    end.not_to change(Attempt, :count)
+
+    expect(enqueued_jobs).to be_empty
+    expect(response).to have_http_status(:service_unavailable)
+    expect(response.headers.fetch("Retry-After").to_i).to be_between(36, 37)
+    expect(response.body).to include("The judge is at capacity (2 pending submissions)", "not queued", "estimate")
+    expect(response.body).to include(ERB::Util.html_escape(code))
+    expect(response.body).not_to include("private source", "other pending source")
+
+    session.attempts.first.update!(judge_result: "Runtime Error")
+    expect do
+      post problem_attempts_path(problem), params: { attempt: { code: code, language: "ruby" } }
+    end.to change(Attempt, :count).by(1).and change { enqueued_jobs.size }.by(1)
+    expect(response).to redirect_to(attempt_path(user.attempts.sole))
+  end
+
+  it "shows the estimated wait and then the running submission without changing its verdict" do
+    sign_in(user)
+    problem = Problem.first
+    session = user.practice_sessions.for_today(problem)
+    travel_to(Time.utc(2026, 11, 4, 18)) do
+      first = session.attempts.create!(code: "private older source", total_cases: 6, judging_started_at: 10.seconds.ago)
+      second = session.attempts.create!(code: "queued source", total_cases: 7)
+      attempt = session.attempts.create!(code: "my source", total_cases: 6)
+      session.attempts.create!(code: "later source", total_cases: 6)
+
+      get attempt_path(attempt)
+      expect(response.body).to include("2 submissions ahead", "about 86 seconds", "estimate")
+      expect(response.body).not_to include("private older source", "queued source", "later source")
+
+      first.update!(judge_result: "Accepted")
+      second.update!(judge_result: "Wrong Answer")
+      attempt.update!(judging_started_at: Time.current)
+      get attempt_path(attempt)
+      expect(response.body).to include("Judging has started", "Refresh result")
+      expect(response.body).not_to include("submissions ahead")
+      expect(attempt.reload.judge_result).to eq("Pending")
+    end
+  end
 
   it "registers only Free members and does not accept a role supplied by the browser" do
     post registration_path, params: { user: { email: "new@example.com", password: "correct-horse-battery", password_confirmation: "correct-horse-battery", role: "Premium" } }
@@ -74,7 +128,7 @@ RSpec.describe "Online Judge requests", type: :request do
     expect(response.body).not_to include(problem.starter_code)
   end
 
-  it "saves Judge Unavailable when the judge process cannot start" do
+  it "queues judging and preserves infrastructure failures" do
     sign_in(user)
     problem = Problem.find_by!(slug: "contains-duplicate")
     command = instance_double(Judge::Command)
@@ -85,14 +139,45 @@ RSpec.describe "Online Judge requests", type: :request do
       post problem_attempts_path(problem), params: {
         attempt: { code: RubySolutions::CORRECT.fetch(problem.slug), language: "ruby" }
       }
-    end.to change(Attempt, :count).by(1)
+    end.to change(Attempt, :count).by(1).and change { enqueued_jobs.size }.by(1)
 
     attempt = Attempt.order(:id).last
     expect(response).to redirect_to(attempt_path(attempt))
+    expect(attempt.judge_result).to eq("Pending")
+    expect(attempt.total_cases).to eq(6)
+    follow_redirect!
+    expect(response.body).to include("Pending")
+    expect(response.body).to include("Refresh result")
+    expect(response.body).not_to include('http-equiv="refresh"')
+
+    perform_enqueued_jobs
+
     expect(attempt.reload.judge_result).to eq("Judge Unavailable")
     expect(attempt.error_message).to eq("The Ruby judge is unavailable. Your code was saved; please try again later.")
-    follow_redirect!
+    get attempt_path(attempt)
     expect(response.body).to include("Judge Unavailable")
+    expect(response.body).not_to include("Refresh result")
+  end
+
+  it "keeps the submission when enqueueing fails" do
+    sign_in(user)
+    problem = Problem.first
+    code = RubySolutions::CORRECT.fetch(problem.slug)
+    [ ActiveJob::EnqueueError, ActiveRecord::ActiveRecordError ].each do |error_class|
+      error = error_class.new("queue unavailable")
+      allow(JudgeSubmissionJob.queue_adapter).to receive(:enqueue).and_raise(error)
+      expect(Rails.error).to receive(:report).with(error) if error.is_a?(ActiveRecord::ActiveRecordError)
+
+      expect do
+        post problem_attempts_path(problem), params: { attempt: { code: code, language: "ruby" } }
+      end.to change(Attempt, :count).by(1)
+
+      attempt = Attempt.order(:id).last
+      expect(response).to redirect_to(attempt_path(attempt))
+      expect(attempt).to have_attributes(code: code, judge_result: "Judge Unavailable", total_cases: 6)
+      follow_redirect!
+      expect(response.body).to include("Your code was saved; please try again later.")
+    end
   end
 
   it "restores starter code after blank submissions without rewriting history" do
@@ -101,6 +186,7 @@ RSpec.describe "Online Judge requests", type: :request do
 
     [ "", " \t\n" ].each do |code|
       post problem_attempts_path(problem), params: { attempt: { code: code, language: "ruby" } }
+      perform_enqueued_jobs
       attempt = user.attempts.order(:id).last
       get problem_path(problem)
 

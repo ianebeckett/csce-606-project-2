@@ -4,6 +4,7 @@ RSpec.describe Judge::DockerRunner do
   before { seed_judge }
   let(:problem) { Problem.find_by!(slug: "contains-duplicate") }
   let(:command) { instance_double(Judge::Command) }
+  let(:image) { ENV.fetch("JUDGE_IMAGE", described_class::DEFAULT_IMAGE) }
 
   it "restricts the container and always removes only its own container" do
     run_name = nil
@@ -68,7 +69,7 @@ RSpec.describe Judge::DockerRunner do
     )
     execution = Judge::Command.new.call(
       [ "docker", "run", "--rm", "--pull=never", "--interactive", "--env", "JUDGE_COVERAGE=1",
-        described_class::DEFAULT_IMAGE ],
+        image ],
       input: payload, timeout: 4
     )
     report = JSON.parse(execution.stdout).fetch("coverage")
@@ -110,7 +111,7 @@ RSpec.describe Judge::DockerRunner do
 
   it "stops a container at its own wall-clock deadline" do
     result = Judge::Command.new.call(
-      [ "docker", "run", "--rm", "--pull=never", described_class::DEFAULT_IMAGE, "0.2s", "ruby", "-e", "loop {}" ],
+      [ "docker", "run", "--rm", "--pull=never", image, "0.2s", "ruby", "-e", "loop {}" ],
       timeout: 2
     )
 

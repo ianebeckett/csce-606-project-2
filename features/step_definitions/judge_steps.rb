@@ -16,6 +16,42 @@ end
 Then("I am asked to sign in") { expect(page).to have_content("Please sign in to practice.") }
 Then("no submission has been created") { expect(Attempt.count).to eq(0) }
 
+Given("the judge has reached its submission limit") do
+  problem = Problem.find_by!(slug: "contains-duplicate")
+  other = create_user(email: "queue-owner@example.com")
+  session = other.practice_sessions.for_today(problem)
+  Judge::Queue::MAX_PENDING.times do
+    session.attempts.create!(code: "earlier submission", total_cases: problem.test_cases.count)
+  end
+  @pending_count = Attempt.count
+end
+
+Then("I am told when to retry without losing my code") do
+  expect(page.status_code).to eq(503)
+  expect(page.response_headers.fetch("Retry-After")).to eq("47")
+  expect(page).to have_content("The judge is at capacity")
+  expect(page).to have_content("try again in about 47 seconds")
+  expect(page).to have_content("not queued")
+  expect(page.find_field("Ruby source code").value.gsub(/\r\n?/, "\n")).to eq(@submitted_code)
+  expect(Attempt.count).to eq(@pending_count)
+  expect(enqueued_jobs).to be_empty
+end
+
+When("the earlier submissions finish") do
+  Attempt.where(judge_result: "Pending").find_each { |attempt| attempt.update!(judge_result: "Accepted") }
+end
+
+When("I submit my solution again") do
+  click_button "Submit Ruby solution"
+  @attempt = @user.attempts.order(:id).last
+end
+
+Then("I see an estimated wait before judging starts") do
+  expect(page).to have_content("0 submissions ahead")
+  expect(page).to have_content("about 5 seconds")
+  expect(page).to have_content("estimate")
+end
+
 When("I submit a correct Ruby solution for {string}") do |slug|
   @problem = Problem.find_by!(slug: slug)
   @submitted_code = RubySolutions::CORRECT.fetch(slug)
@@ -26,11 +62,23 @@ When("I submit a correct Ruby solution for {string}") do |slug|
   @attempt = Attempt.order(:id).last
 end
 
+Then("I first see a {string} result") do |verdict|
+  expect(page).to have_content(verdict)
+  expect(@attempt.reload.judge_result).to eq(verdict)
+  expect(page).to have_link("Refresh result", href: attempt_path(@attempt))
+end
+
+When("judging finishes") do
+  perform_enqueued_jobs
+  click_link "Refresh result"
+end
+
 Then("I see an {string} result with every predefined case passed") do |verdict|
   expect(page).to have_content(verdict)
   expect(page).to have_content("#{@problem.test_cases.count} / #{@problem.test_cases.count} test cases passed")
   expect(@attempt.reload.judge_result).to eq(verdict)
   expect(@attempt.total_cases).to be >= 5
+  expect(page).not_to have_link("Refresh result")
 end
 
 Then("my submitted code is preserved in my personal history") do
@@ -58,9 +106,11 @@ When("I submit a Ruby solution with {string}") do |failure|
 end
 
 Then("I see the {string} verdict and a passed-case count") do |verdict|
+  @attempt.reload
   expect(page).to have_content(verdict)
   expect(page).to have_content("#{@attempt.passed_cases} / #{@attempt.total_cases} test cases passed")
-  expect(@attempt.reload.judge_result).to eq(verdict)
+  expect(@attempt.judge_result).to eq(verdict)
+  expect(page).not_to have_link("Refresh result")
 end
 
 Then("I can still open the problem and read my submitted code") do
@@ -74,6 +124,7 @@ end
 Given("I am practicing just before midnight in Chicago") { travel_to(Time.utc(2026, 10, 21, 4, 59, 59)) }
 
 Then("my two submissions belong to today's practice session") do
+  perform_enqueued_jobs
   @previous_session = @user.practice_sessions.sole
   expect(@previous_session.practice_date).to eq(Date.new(2026, 10, 20))
   expect(@previous_session.attempts.count).to eq(2)
@@ -88,6 +139,8 @@ When("I submit again after midnight") do
 end
 
 Then("only the new submission belongs to the new day's practice session") do
+  perform_enqueued_jobs
+  click_link "Refresh result"
   expect(@user.practice_sessions.count).to eq(2)
   expect(@attempt.practice_session.practice_date).to eq(Date.new(2026, 10, 21))
   expect(@attempt.practice_session.attempts.pluck(:id)).to eq([ @attempt.id ])
