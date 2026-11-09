@@ -16,7 +16,7 @@ Returns:   <%= JSON.generate(test_case.expected_output) %></pre></div>
   <div class="work-column">
   <%= render "problems/coach", practice_session: @coaching_session, problem: @problem if @coaching_session %>
   <% unless current_user.premium? %>
-  <p class="notice">Upgrade to Premium to use Socratic code coaching: explain your approach to a coach before you write code.</p>
+  <p class="notice">Upgrade to Premium to use Socratic code coaching: explain your approach to a coach before you write code. <%= link_to "Upgrade my account", account_path %></p>
   <% end %>
   <% if @coaching_session&.coaching_locked? %>
   <section class="editor-panel locked-editor" aria-labelledby="editor-title">
@@ -30,9 +30,9 @@ Returns:   <%= JSON.generate(test_case.expected_output) %></pre></div>
     <%= form_with model: @attempt, url: problem_attempts_path(@problem), local: true do |form| %>
       <%= form.hidden_field :language, value: Attempt::LANGUAGE %>
       <%= form.label :code, "Ruby source code" %>
-      <%= form.text_area :code, rows: ApplicationHelper::CODE_EDITOR_ROWS, spellcheck: false, class: "code-editor" %>
+      <%= form.text_area :code, rows: ApplicationHelper::CODE_EDITOR_ROWS, spellcheck: false, class: "code-editor", data: { submit_on_ctrl_enter: "" } %>
       <% if @problem.ready_for_judging? %>
-        <%= form.submit "Submit Ruby solution", class: "button" %>
+        <%= form.submit "Submit Ruby solution (Ctrl + Enter)", class: "button" %>
       <% else %>
         <p role="status">This problem is not ready for judging: at least five cases are required.</p>
       <% end %>

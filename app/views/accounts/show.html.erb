@@ -1,0 +1,19 @@
+<% content_for :title, "My account · Code Coach" %>
+<h1>My account</h1>
+
+<section aria-labelledby="account-details">
+  <h2 id="account-details">Details</h2>
+  <p>Email: <%= current_user.email %></p>
+  <p>Plan: <strong data-testid="plan"><%= current_user.role %></strong></p>
+</section>
+
+<section aria-labelledby="account-plan">
+  <h2 id="account-plan">Change plan</h2>
+  <% if current_user.premium? %>
+    <p>Premium includes Socratic coaching and AI code review.</p>
+    <%= button_to "Downgrade to Free", account_path, method: :patch, params: { role: "Free" }, class: "button" %>
+  <% else %>
+    <p>Upgrade to Premium for Socratic coaching and AI code review.</p>
+    <%= button_to "Upgrade to Premium", account_path, method: :patch, params: { role: "Premium" }, class: "button" %>
+  <% end %>
+</section>

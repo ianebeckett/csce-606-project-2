@@ -18,6 +18,10 @@ class User < ApplicationRecord
     role == "Premium"
   end
 
+  def change_role!(new_role)
+    update!(role: new_role)
+  end
+
   def solved_problem_ids
     attempts.joins(:practice_session).where(judge_result: Attempt::ACCEPTED)
       .distinct.pluck("practice_sessions.problem_id")

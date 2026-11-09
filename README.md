@@ -1,6 +1,27 @@
 # Code Coach
 
-## Install
+## Getting started
+
+There are two ways to use Code Coach: open the deployed app, or clone the
+repository and run it on your computer.
+
+### Use the deployed app
+
+1. Open <https://codecoach-368f4d281974.herokuapp.com/> and select
+   **Create account**. Use any email and a password of at least 12 characters.
+2. Open **Roadmap & Practice**, pick an unlocked topic, and submit a Ruby
+   solution. **My submissions** and **My history** show your past attempts.
+3. To try Premium features, select **My account** in the header, then
+   **Upgrade to Premium**. Premium adds the Socratic coach on each problem and
+   **Get AI code review** on each submission. Select **Downgrade to Free** to
+   switch back.
+
+Changing plans is a free mock toggle; there is no payment step. See the
+[user guide](docs/user_guide.md) for how the roadmap, practice, and reviews work.
+
+### Run locally
+
+#### Install
 
 - Git
 - Ruby 4.0.1
@@ -8,13 +29,15 @@
 - GNU Make
 - Docker Desktop (macOS or Windows) or Docker Engine with the Compose plugin (Linux)
 
-## Run
+#### Run
 
 1. Clone this repository.
 2. Start Docker and confirm `docker info` succeeds without `sudo`.
    On Linux, after joining the `docker` group, run `newgrp docker` or log out
    and back in, then retry. See [Docker permissions](#docker-permissions-on-linux).
 3. Run `make run` from the project directory to start local development.
+4. Open <http://127.0.0.1:3000> and select **Create account**. To try Premium
+   features, follow step 3 of [Use the deployed app](#use-the-deployed-app).
 
 Setup starts PostgreSQL 17 in Docker, waits until it is ready, and prepares the
 development and test databases. PostgreSQL data persists in a Docker volume.
@@ -81,41 +104,19 @@ Never commit the key. In production, set it in the hosting provider's environmen
 Premium is the account role that grants access to AI features. New accounts
 start as Free.
 
-#### Local grader account
+#### Change plan from My account
 
-After completing the setup under **Run**, create a Premium demo account in the
-local development database. Run this from the project directory:
+Signed-in members can open **My account** in the header (`/account`) to see
+their email and current plan. Select **Upgrade to Premium** or **Downgrade to
+Free** to switch plans immediately. This is a mock toggle for development and
+demos: there is no payment step. The Premium notices on the problem and
+submission pages link to this page through **Upgrade my account**.
 
-```sh
-bin/rails runner -e development '
-  user = User.find_or_initialize_by(email: "grader@example.com")
-  user.update!(role: "Premium", password: "CodeCoach-Grader-2026!")
-  puts "Premium account ready: #{user.email}"
-'
-```
+#### AI features locally
 
-Open <http://127.0.0.1:3000/session/new> while `make run` is running and sign in:
-
-- **Email:** `grader@example.com`
-- **Password:** `CodeCoach-Grader-2026!`
-
-These are local demo credentials. The command creates the account if missing;
-running it again restores its Premium role and demo password while preserving
-its practice history. The account is stored in the local database, so a grader
-using a fresh clone must run the command too.
-
-To try AI code review, configure `OPENAI_API_KEY` as described above, submit a
-solution, and select **Get AI code review** on the attempt page. The Premium
-role alone does not configure the AI service.
-
-#### Promote an existing account
-
-To keep your own account and password, register through the app, then run this
-with your registered email and refresh the page:
-
-```sh
-bin/rails runner -e development 'User.find_by!(email: "you@example.com").update!(role: "Premium")'
-```
+The coach and AI code review need `OPENAI_API_KEY`, configured as described
+above. The Premium role alone does not configure the AI service; without a key,
+those features show an "unavailable" message instead.
 
 ## Tests and quality checks
 
