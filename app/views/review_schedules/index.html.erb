@@ -1,10 +1,13 @@
-<h1>Problems Due for Review</h1>
+<% content_for :title, "Upcoming Reviews · Code Coach" %>
 
-<p>
-  Practice previously solved problems to strengthen your understanding.
-</p>
+<div class="page-heading">
+  <div>
+    <h1>Upcoming Reviews</h1>
+    <p class="muted">Practice previously solved problems to strengthen your understanding.</p>
+  </div>
+</div>
 
-<% if @due_reviews.any? %>
+<% if @upcoming_reviews.any? %>
   <table>
     <thead>
     <tr>
@@ -16,22 +19,26 @@
     </thead>
 
     <tbody>
-    <% @due_reviews.each do |review| %>
+    <% @upcoming_reviews.each do |review| %>
       <tr>
-        <!-- Display the coding problem's title -->
-        <td><%= review.problem.title %></td>
-        <td><%= review.problem.difficulty %></td>
         <td>
-          <%= review.next_review_date.strftime("%b %d, %Y") %>
+          <%= link_to review.problem.title, problem_path(review.problem) %>
         </td>
+        <td><%= review.problem.difficulty %></td>
+        <td><%= review.next_review_date.strftime("%b %d, %Y") %></td>
         <td>
           <%= link_to "Practice Now",
-                      problem_path(review.problem.slug) %>
+                      problem_path(review.problem),
+                      class: "practice-link" %>
         </td>
       </tr>
     <% end %>
     </tbody>
   </table>
 <% else %>
-  <p>No problems are due for review. Great job!</p>
+  <p class="empty-state">You don't have any upcoming reviews scheduled.</p>
 <% end %>
+
+<p>
+  <%= link_to "← Back to Problems", problems_path %>
+</p>

@@ -26,3 +26,18 @@ Feature: US2 — Spaced Repetition
     When I open the roadmap
     Then I see "No problems are due for review."
     And I see "Unlocked problems"
+
+  Scenario: The dashboard previews the two soonest upcoming reviews
+    Given I am signed in as a "Free" member
+    And I have three upcoming reviews scheduled
+    When I open the roadmap
+    Then I see the two soonest upcoming reviews on the dashboard
+    And I see the dates for those upcoming reviews
+    And I can open the full upcoming reviews list
+
+  Scenario: A learner can view all upcoming reviews
+    Given I am signed in as a "Free" member
+    And I have three upcoming reviews scheduled
+    When I open the roadmap
+    And I select the upcoming reviews "View all" link
+    Then I see all three upcoming reviews in date order

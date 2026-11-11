@@ -1,3 +1,4 @@
+
 require "rails_helper"
 
 RSpec.describe "Review Schedules", type: :request do
@@ -6,9 +7,7 @@ RSpec.describe "Review Schedules", type: :request do
     expect(response).to redirect_to(new_session_path)
   end
 
-
-  it "shows a message when the student has no reviews due" do
-    # Create a student account for testing
+  it "shows a message when the student has no upcoming reviews" do
     user = User.create!(
       email: "reviews-test@example.com",
       password: "password12345",
@@ -20,54 +19,48 @@ RSpec.describe "Review Schedules", type: :request do
       password: "password12345"
     }
 
-    expect(response).to redirect_to(problems_path)
-
     get reviews_path
+
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Problems Due for Review")
-    expect(response.body).to include("No problems are due for review")
+    expect(response.body).to include("Upcoming Reviews")
+    expect(response.body).to include("You don't have any upcoming reviews scheduled")
   end
 
-
-  it "only displays reviews belonging to the logged-in student" do
+  it "only displays upcoming reviews belonging to the logged-in student" do
     seed_judge
+
     user = User.create!(
       email: "my-review@example.com",
-      password: "password12345",
-      password_confirmation: "password12345"
+      password: "password12345"
     )
 
     other_user = User.create!(
       email: "other-review@example.com",
-      password: "password12345",
-      password_confirmation: "password12345"
+      password: "password12345"
     )
 
-    # Select two different coding problems
     my_problem = Problem.first
     other_problem = Problem.second
 
     ReviewSchedule.create!(
       user: user,
       problem: my_problem,
-      next_review_date: Date.current,
-      interval_days: 1
+      next_review_date: Date.current + 2.days,
+      interval_days: 2
     )
 
     ReviewSchedule.create!(
       user: other_user,
       problem: other_problem,
-      next_review_date: Date.current,
-      interval_days: 1
+      next_review_date: Date.current + 3.days,
+      interval_days: 3
     )
 
-    # Log in as the first student
     post session_path, params: {
       email: user.email,
       password: "password12345"
     }
 
-    expect(response).to redirect_to(problems_path)
     get reviews_path
 
     expect(response).to have_http_status(:ok)
@@ -75,18 +68,17 @@ RSpec.describe "Review Schedules", type: :request do
     expect(response.body).not_to include(other_problem.title)
   end
 
-
-  it "does not display problems scheduled for future reviews" do
+  it "displays upcoming reviews in date order and excludes due reviews" do
     seed_judge
 
     user = User.create!(
       email: "future-review@example.com",
-      password: "password12345",
-      password_confirmation: "password12345"
+      password: "password12345"
     )
 
     due_problem = Problem.first
-    future_problem = Problem.second
+    later_problem = Problem.second
+    sooner_problem = Problem.third
 
     ReviewSchedule.create!(
       user: user,
@@ -95,12 +87,18 @@ RSpec.describe "Review Schedules", type: :request do
       interval_days: 1
     )
 
-    # Create a review scheduled for next week
     ReviewSchedule.create!(
       user: user,
-      problem: future_problem,
+      problem: later_problem,
       next_review_date: Date.current + 7.days,
       interval_days: 7
+    )
+
+    ReviewSchedule.create!(
+      user: user,
+      problem: sooner_problem,
+      next_review_date: Date.current + 2.days,
+      interval_days: 2
     )
 
     post session_path, params: {
@@ -109,8 +107,13 @@ RSpec.describe "Review Schedules", type: :request do
     }
 
     get reviews_path
+
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(due_problem.title)
-    expect(response.body).not_to include(future_problem.title)
+    expect(response.body).not_to include(due_problem.title)
+    expect(response.body).to include(sooner_problem.title)
+    expect(response.body).to include(later_problem.title)
+
+    expect(response.body.index(sooner_problem.title))
+      .to be < response.body.index(later_problem.title)
   end
 end

@@ -1,8 +1,38 @@
 <% content_for :title, "Roadmap & Problems · Code Coach" %>
+
 <div class="page-heading">
   <h1>Problems</h1>
-  <div class="stat-card"><strong><%= roadmap.solved_ids.size %><span> / <%= roadmap.topics.sum { |topic| topic.problems.size } %></span></strong><span>problems accepted</span></div>
+
+
+  <%= link_to reviews_path, class: "upcoming-reviews-card" do %>
+    <section aria-labelledby="upcoming-reviews-title">
+      <div class="upcoming-reviews-header">
+        <h2 id="upcoming-reviews-title">Upcoming Reviews</h2>
+        <span>View all →</span>
+      </div>
+
+      <% if @upcoming_reviews_preview.any? %>
+        <% @upcoming_reviews_preview.each do |review| %>
+          <div class="upcoming-review-item">
+            <span><%= review.problem.title %></span>
+            <span><%= review.next_review_date.strftime("%b %d, %Y") %></span>
+          </div>
+        <% end %>
+      <% else %>
+        <p>No upcoming reviews scheduled.</p>
+      <% end %>
+    </section>
+  <% end %>
+
+
+  <div class="stat-card">
+    <strong>
+      <%= roadmap.solved_ids.size %><span> / <%= roadmap.topics.sum { |topic| topic.problems.size } %></span>
+    </strong>
+    <span>problems accepted</span>
+  </div>
 </div>
+
 <div class="catalog-layout">
   <aside class="topic-panel" aria-label="Problem topics">
     <h2>ROADMAP</h2>
