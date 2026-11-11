@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   root "problems#index"
   # Display coding problems that are due for review
   get "reviews", to: "review_schedules#index", as: :reviews
+  get "due-reviews", to: "review_schedules#due", as: :due_reviews
 
   # Save a student's performance rating after practice
   patch "practice_sessions/:id/rate",

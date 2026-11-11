@@ -7,4 +7,10 @@ class ReviewSchedulesController < ApplicationController
                                     .includes(:problem)
                                     .order(:next_review_date)
   end
+
+  def due
+    @due_reviews = current_user.review_schedules.due
+                               .includes(:problem)
+                               .order(:next_review_date)
+  end
 end

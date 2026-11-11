@@ -8,7 +8,7 @@
     <section aria-labelledby="upcoming-reviews-title">
       <div class="upcoming-reviews-header">
         <h2 id="upcoming-reviews-title">Upcoming Reviews</h2>
-        <span>View all →</span>
+        <span>View All </span>
       </div>
 
       <% if @upcoming_reviews_preview.any? %>
@@ -64,22 +64,31 @@
         <p class="empty-state">
           No problems are due for review.
         </p>
+
       <% else %>
-        <% @due_reviews.each do |review| %>
-          <article class="problem-row">
-            <div>
-              <h3>
-                <%= link_to review.problem.title,
-                            problem_path(review.problem) %>
-              </h3>
-              <p class="muted small">
-                Due: <%= review.next_review_date.strftime("%b %d, %Y") %>
-              </p>
-            </div>
-            <%= link_to "Review Now",
-                        problem_path(review.problem),
-                        class: "practice-link" %>
-          </article>
+        <div class="due-review-list">
+          <% @due_reviews.each do |review| %>
+            <article class="due-review-card">
+              <div class="due-review-info">
+                <h3>
+                  <%= link_to review.problem.title,
+                              problem_path(review.problem) %>
+                </h3>
+                <p class="muted small">
+                  Due: <%= review.next_review_date.strftime("%b %d, %Y") %>
+                </p>
+              </div>
+              <%= link_to "Review Now",
+                          problem_path(review.problem),
+                          class: "due-review-action" %>
+            </article>
+          <% end %>
+        </div>
+        <% if @due_reviews_count > 0 %>
+          <div class="due-reviews-view-all">
+            <%= link_to "View All #{@due_reviews_count} Due Reviews",
+                        due_reviews_path %>
+          </div>
         <% end %>
       <% end %>
     </section>
