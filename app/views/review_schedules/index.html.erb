@@ -1,3 +1,4 @@
+
 <% content_for :title, "Upcoming Reviews · Code Coach" %>
 
 <div class="page-heading">
@@ -8,37 +9,40 @@
 </div>
 
 <% if @upcoming_reviews.any? %>
-  <table>
-    <thead>
-    <tr>
-      <th scope="col">Problem</th>
-      <th scope="col">Difficulty</th>
-      <th scope="col">Review Date</th>
-      <th scope="col">Action</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    <% @upcoming_reviews.each do |review| %>
+  <div class="review-table-wrap">
+    <table>
+      <thead>
       <tr>
-        <td>
-          <%= link_to review.problem.title, problem_path(review.problem) %>
-        </td>
-        <td><%= review.problem.difficulty %></td>
-        <td><%= review.next_review_date.strftime("%b %d, %Y") %></td>
-        <td>
-          <%= link_to "Practice Now",
-                      problem_path(review.problem),
-                      class: "practice-link" %>
-        </td>
+        <th scope="col">Problem</th>
+        <th scope="col">Difficulty</th>
+        <th scope="col">Review Date</th>
+        <th scope="col">Action</th>
       </tr>
-    <% end %>
-    </tbody>
-  </table>
+      </thead>
+
+      <tbody>
+      <% @upcoming_reviews.each do |review| %>
+        <tr>
+          <td>
+            <%= link_to review.problem.title, problem_path(review.problem) %>
+          </td>
+          <td><%= review.problem.difficulty %></td>
+          <td><%= review.next_review_date.strftime("%b %d, %Y") %></td>
+          <td>
+            <%= link_to "Practice Now",
+                        problem_path(review.problem),
+                        class: "practice-link" %>
+          </td>
+        </tr>
+      <% end %>
+      </tbody>
+    </table>
+  </div>
 <% else %>
   <p class="empty-state">You don't have any upcoming reviews scheduled.</p>
 <% end %>
 
-<p>
-  <%= link_to "← Back to Problems", problems_path %>
-</p>
+<div class="review-page-actions">
+  <%= link_to "Back to Problems", problems_path,
+              class: "button back-link" %>
+</div>

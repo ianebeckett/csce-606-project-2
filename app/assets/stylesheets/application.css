@@ -139,7 +139,7 @@ th { color: var(--muted); font-size: .75rem; }
 .upcoming-reviews-card {
   display: block;
   flex: 1;
-  max-width: 740px;
+  max-width: 716px;
   min-width: 0;
   padding: 1rem 1.25rem;
   background: var(--panel);
@@ -150,9 +150,7 @@ th { color: var(--muted); font-size: .75rem; }
   transition: border-color 0.2s ease;
 }
 
-.upcoming-reviews-card:hover {
-  border-color: var(--accent);
-}
+
 
 .upcoming-reviews-header {
   display: flex;
@@ -204,4 +202,31 @@ th { color: var(--muted); font-size: .75rem; }
     flex: 1 1 100%;
     max-width: none;
   }
+}
+
+.review-page-actions {
+  margin-top: 1.25rem;
+}
+
+.review-table-wrap {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.review-table-wrap table {
+  background: transparent;
+}
+
+.review-table-wrap tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.review-table-wrap tbody td:first-child a {
+  text-decoration: none;
+}
+
+.review-table-wrap tbody td:first-child a:hover {
+  color: var(--accent);
 }
