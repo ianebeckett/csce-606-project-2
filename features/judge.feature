@@ -60,7 +60,7 @@ Feature: US7 — Online Judge & Error Recovery
     Given I am signed in as a "Free" member
     And the judge queue contains 9 Pending submissions
     When I submit a correct Ruby solution for "contains-duplicate"
-    Then I see a Pending result with 9 submissions ahead and an estimated wait of 545 seconds
+    Then I see a Pending result with 9 submissions ahead and an estimated wait of 541 seconds
 
   Scenario: Keep my code when the judge queue is full
     Given I am signed in as a "Free" member
@@ -125,6 +125,24 @@ Feature: US7 — Online Judge & Error Recovery
     And the page explains that code is required
     And my submitted code is preserved in my personal history
     And I can retry with the problem's starter code
+
+  Scenario: Use an already-ready judge and prepare a fresh replacement
+    Given I am signed in as a "Free" member
+    And two unused Heroku judges are ready
+    When I submit a correct Ruby solution for "contains-duplicate"
+    Then I first see a "Pending" result
+    When judging finishes
+    Then I see an "Accepted" result with every predefined case passed
+    And my judge is retired and two unused judges become ready
+
+  Scenario: Preserve a submission when a ready judge returns an invalid result
+    Given I am signed in as a "Free" member
+    And a ready Heroku judge will return an invalid result
+    When I submit a correct Ruby solution for "contains-duplicate"
+    When judging finishes
+    Then I see the "Judge Unavailable" verdict and a passed-case count
+    And my submitted code is preserved in my personal history
+    And my judge is retired and two unused judges become ready
 
   Scenario: Do not judge a problem with too few cases
     Given I am signed in as a "Free" member

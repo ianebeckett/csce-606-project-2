@@ -20,11 +20,34 @@ module Judge
     SUCCESS_STATUS = DockerRunner::SUCCESS_STATUS
     VALID_STATUSES = DockerRunner::VALID_STATUSES
 
+    class << self
+      attr_accessor :pool
+    end
+
     class ResponseTooLarge < StandardError; end
     class InvalidResponse < StandardError; end
 
     class Api
       def create_dyno(app:, token:, env:)
+        launch(app: app, token: token, env: env, command: COMMAND, lifetime: 60).fetch("attach_url")
+      end
+
+      def prepare_dyno(app:, token:, env:)
+        launch(app: app, token: token, env: env,
+          command: "960s ruby /judge/ready.rb", lifetime: 1080)
+      end
+
+      def stop_dyno(app:, token:, id:)
+        uri = URI("#{PLATFORM_API}/apps/#{app}/dynos/#{id}/actions/stop")
+        request = Net::HTTP::Post.new(uri.request_uri)
+        request["Authorization"] = "Bearer #{token}"
+        request["Accept"] = "application/vnd.heroku+json; version=3"
+        request(uri, request)
+      end
+
+      private
+
+      def launch(app:, token:, env:, command:, lifetime:)
         uri = URI("#{PLATFORM_API}/apps/#{app}/dynos")
         request = Net::HTTP::Post.new(uri.request_uri)
         request["Authorization"] = "Bearer #{token}"
@@ -32,20 +55,19 @@ module Judge
         request["Accept"] = "application/vnd.heroku+json; version=3"
         request.body = JSON.generate(
           attach: true,
-          command: COMMAND,
+          command: command,
           env: env,
           force_no_tty: true,
-          time_to_live: 60,
+          time_to_live: lifetime,
+          size: "Basic",
           type: PROCESS_TYPE
         )
         response = request(uri, request)
         raise InvalidResponse unless response.code.to_i == 201
         raise ResponseTooLarge if response.body.bytesize > MAX_RESPONSE_BYTES
 
-        JSON.parse(response.body).fetch("attach_url")
+        JSON.parse(response.body)
       end
-
-      private
 
       def request(uri, request)
         http = Net::HTTP.new(uri.host, uri.port, nil)
@@ -67,11 +89,7 @@ module Judge
 
       def call(url:, input:, timeout:)
         Timeout.timeout(timeout) do
-          uri = endpoint(url)
-          ssl = @socket_factory ? @socket_factory.call(uri) : open(uri)
-          ssl.write("#{uri.path.delete_prefix("/")}#{uri.query ? "?#{uri.query}" : ""}\r\n")
-          raise InvalidResponse unless ssl.gets
-
+          ssl = connect(url)
           ssl.write(input)
           ssl.write(END_OF_TRANSMISSION)
           read(ssl)
@@ -80,7 +98,80 @@ module Judge
         end
       end
 
+      def prepare(url:, on_close:)
+        Timeout.timeout(90) do
+          ssl = connect(url)
+          raise InvalidResponse unless ssl.gets("\n", 64)&.strip == "CODECOACH_JUDGE_READY"
+
+          session = Session.new(ssl, on_close: on_close)
+        ensure
+          ssl&.close unless session
+        end
+      end
+
+      class Session
+        def initialize(socket, on_close:)
+          @socket, @on_close = socket, on_close
+          @closed = false
+        end
+
+        def usable?
+          return false if @closed || @socket.closed?
+
+          # Process TLS control frames too; a readable TCP socket need not have
+          # application output. Any real output before a payload is invalid.
+          [ :wait_readable, :wait_writable ].include?(@socket.read_nonblock(1, exception: false))
+        rescue IOError, SystemCallError, OpenSSL::SSL::SSLError
+          false
+        end
+
+        def call(input:, timeout:)
+          Timeout.timeout(timeout) do
+            @socket.write(input)
+            @socket.write(END_OF_TRANSMISSION)
+            output = +""
+            begin
+              loop do
+                output << @socket.readpartial(4096)
+                raise ResponseTooLarge if output.bytesize > MAX_RESPONSE_BYTES
+              end
+            rescue EOFError
+              output.gsub("\r\n", "\n").strip
+            end
+          end
+        ensure
+          close
+        end
+
+        def close
+          return if @closed
+
+          @closed = true
+          begin
+            @socket.close
+          ensure
+            @on_close.call
+          end
+        rescue StandardError
+          # The attachment closes first; the dyno TTL also bounds failed cleanup.
+          nil
+        end
+      end
+
       private
+
+      def connect(url)
+        connected = false
+        uri = endpoint(url)
+        ssl = @socket_factory ? @socket_factory.call(uri) : open(uri)
+        ssl.write("#{uri.path.delete_prefix("/")}#{uri.query ? "?#{uri.query}" : ""}\r\n")
+        raise InvalidResponse unless ssl.gets("\n", 1024)
+
+        connected = true
+        ssl
+      ensure
+        ssl&.close unless connected
+      end
 
       def endpoint(url)
         uri = URI.parse(url)
@@ -90,6 +181,7 @@ module Judge
       end
 
       def open(uri)
+        connected = false
         socket = Socket.tcp(uri.host, uri.port, connect_timeout: OPEN_TIMEOUT)
         context = OpenSSL::SSL::SSLContext.new
         context.set_params(verify_mode: OpenSSL::SSL::VERIFY_PEER)
@@ -98,10 +190,10 @@ module Judge
         ssl.sync_close = true
         ssl.connect
         ssl.post_connection_check(uri.host)
+        connected = true
         ssl
-      rescue StandardError
-        socket&.close
-        raise
+      ensure
+        socket&.close unless connected
       end
 
       def read(ssl)
@@ -119,20 +211,37 @@ module Judge
       app: ENV["JUDGE_HEROKU_APP"],
       token: ENV["JUDGE_HEROKU_TOKEN"],
       api: Api.new,
-      rendezvous: Rendezvous.new
+      rendezvous: Rendezvous.new,
+      pool: self.class.pool
     )
       @app = app
       @token = token
       @api = api
       @rendezvous = rendezvous
+      @pool = pool
+    end
+
+    def prepare
+      raise InvalidResponse unless valid_configuration?
+
+      dyno = @api.prepare_dyno(app: @app, token: @token, env: scrubbed_environment)
+      cleanup = -> { @api.stop_dyno(app: @app, token: @token, id: dyno.fetch("id")) }
+      session = @rendezvous.prepare(url: dyno.fetch("attach_url"), on_close: cleanup)
+    ensure
+      cleanup&.call if !session && dyno
     end
 
     def call(code:, language:, problem:, inputs:)
       return unavailable unless valid_configuration?
 
       payload = JSON.generate(Payload.build(code: code, language: language, problem: problem, inputs: inputs))
-      attach_url = @api.create_dyno(app: @app, token: @token, env: scrubbed_environment)
-      response = @rendezvous.call(url: attach_url, input: payload, timeout: timeout(inputs.length))
+      if @pool
+        session = @pool.checkout
+        response = session.call(input: payload, timeout: 55)
+      else
+        attach_url = @api.create_dyno(app: @app, token: @token, env: scrubbed_environment)
+        response = @rendezvous.call(url: attach_url, input: payload, timeout: timeout(inputs.length))
+      end
       result = JSON.parse(response)
       return unavailable unless valid_result?(result, language, inputs.length)
 
@@ -140,6 +249,8 @@ module Judge
     rescue JSON::ParserError, KeyError, InvalidResponse, ResponseTooLarge, SystemCallError, SocketError, IOError,
       Timeout::Error, OpenSSL::SSL::SSLError, Net::ProtocolError
       unavailable
+    ensure
+      session&.close
     end
 
     private
