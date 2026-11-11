@@ -139,7 +139,7 @@ th { color: var(--muted); font-size: .75rem; }
 .upcoming-reviews-card {
   display: block;
   flex: 1;
-  max-width: 460px;
+  max-width: 740px;
   min-width: 0;
   padding: 1rem 1.25rem;
   background: var(--panel);
