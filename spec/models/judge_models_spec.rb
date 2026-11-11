@@ -23,6 +23,15 @@ RSpec.describe "Online Judge models" do
     expect { seed_judge }.not_to change { [ Problem.count, TestCase.count, Attempt.count ] }
   end
 
+  it "generates language starters without import boilerplate" do
+    problem = Problem.find_by!(slug: "contains-duplicate")
+
+    expect(problem.starter_code_for("go")).to start_with("func containsDuplicate")
+    expect(problem.starter_code_for("go")).not_to include("package main", "import")
+    expect(problem.starter_code_for("cpp")).to start_with("class Solution")
+    expect(problem.starter_code_for("cpp")).not_to include("#include", "using namespace")
+  end
+
   it "keeps users unique and authenticates with a password hash" do
     user = create_user(email: "  LEARNER@example.com  ")
     expect(user.email).to eq("learner@example.com")
@@ -32,9 +41,12 @@ RSpec.describe "Online Judge models" do
     expect(User.new(email: "bad", password: "short", role: "admin")).not_to be_valid
   end
 
-  it "rejects non-Ruby and excessively large submissions" do
+  it "accepts supported languages and rejects unknown or excessively large submissions" do
     session = create_user.practice_sessions.create!(problem: Problem.first, started_at: Time.current)
-    expect(session.attempts.new(code: "puts 1", language: "python")).not_to be_valid
+    %w[ruby python go cpp].each do |language|
+      expect(session.attempts.new(code: "solution", language: language)).to be_valid
+    end
+    expect(session.attempts.new(code: "solution", language: "javascript")).not_to be_valid
     expect(session.attempts.new(code: "x" * 65_537, language: "ruby")).not_to be_valid
   end
 

@@ -1,9 +1,9 @@
 # Background judging
 
-Ruby submissions use Active Job with Delayed Job, a shared PostgreSQL database,
-and one judge worker. Puma saves submissions and serves pages; the worker
-executes submitted Ruby in isolated Linux Docker containers. Start Docker
-Desktop on macOS or Docker Engine on Linux before judging.
+Submissions use Active Job with Delayed Job, a shared PostgreSQL database, and
+one judge worker. Puma saves submissions and serves pages. Locally, the worker
+executes Ruby, Python, Go, and C++ in isolated Linux Docker containers. Start
+Docker Desktop on macOS or Docker Engine on Linux before local judging.
 
 ## Run
 
@@ -22,10 +22,16 @@ in another terminal:
 QUEUE=judge bin/rails jobs:work
 ```
 
-For production, set `DATABASE_URL` and prefix database preparation and the
-worker command with `RAILS_ENV=production`. Puma and the worker must use the
-same persistent PostgreSQL database, application version, Docker daemon, and
-executor image.
+Puma and the worker must use the same persistent PostgreSQL database and
+application version. For the single-app Heroku deployment, the queue dyno calls
+the Platform API and each submission runs in a fresh `judge` one-off dyno; it
+does not share a Docker daemon with the web process. See `docs/heroku.md` for
+the required process images, config vars, scaling, and verification commands.
+
+For a non-Heroku production host using local Docker, set `DATABASE_URL`, prefix
+database preparation and the worker command with `RAILS_ENV=production`, and
+give the worker access to the same executor image built from that application
+version.
 `JUDGE_IMAGE` selects the image for both `bin/judge-build` and the worker;
 its default is `codecoach-judge:local`.
 Run the worker under a process supervisor so it restarts after failure.
@@ -40,7 +46,7 @@ parallelism.
 ## Lifecycle
 
 ```text
-Authenticated browser submits Ruby
+Authenticated browser submits Ruby, Python, Go, or C++
         |
         v
 Check roadmap access, coaching, case readiness, and input validation
@@ -61,7 +67,7 @@ Redirect to saved Attempt; show estimated wait and Refresh result
 One worker reserves the job and records judging_started_at
         |
         v
-Run cases sequentially: create container -> execute -> remove container
+Run through Judge::Runner: local Docker container or Heroku judge one-off dyno
         |
         v
 Save verdict, passed/total counts, and any error on Attempt

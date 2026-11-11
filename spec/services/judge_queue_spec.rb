@@ -29,7 +29,7 @@ RSpec.describe Judge::Queue do
     stub_const("Judge::Queue::MAX_PENDING", 1)
     session = create_user.practice_sessions.for_today(Problem.first)
     session.attempts.create!(code: "completed source", judge_result: "Accepted")
-    invalid = session.attempts.build(code: "puts 1", language: "python")
+    invalid = session.attempts.build(code: "puts 1", language: "javascript")
 
     expect(described_class.new.submit(invalid)).to be(false)
     expect(invalid.errors[:language]).not_to be_empty

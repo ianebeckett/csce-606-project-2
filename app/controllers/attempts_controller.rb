@@ -21,6 +21,7 @@ class AttemptsController < ApplicationController
     return redirect_to(problem_path(@problem), alert: COACHING_LOCKED_MESSAGE) if coaching_locked?
 
     @attempt = Attempt.new(params.require(:attempt).permit(:code, :language))
+    @language = Attempt::LANGUAGES.include?(@attempt.language) ? @attempt.language : Attempt::LANGUAGE
 
     unless @problem.ready_for_judging?
       @attempt.errors.add(:base, "This problem is not ready for judging: at least five cases are required.")

@@ -1,7 +1,7 @@
 # User Guide
 
 Create an account or sign in, then open **Roadmap & Practice**. Free and Premium
-members have the same access to the roadmap and Ruby judge. These pages work
+members have the same access to the roadmap and online judge. These pages work
 with JavaScript disabled.
 
 ## Choose a problem
@@ -26,15 +26,24 @@ Start with **Arrays & Hashing**. Mastering it unlocks **Two Pointers**, **Stack*
 
 ## Practice and review a submission
 
-Open a problem, read its statement and examples, and complete the supplied Ruby
-method. Select **Submit Ruby solution** to run the predefined cases. The result
-shows the verdict, passed-case count, and your saved source code. A problem must
-have at least five cases before it can be judged.
+Open a problem, read its statement and examples, and select Ruby 4.0.1,
+Python 3.15.2, Go 1.27.3, or C++23 with GCC 16.2.0. Complete the supplied method
+and submit the solution to run the predefined cases. Language selection and
+submission work with JavaScript disabled. The result shows the fixed runtime,
+verdict, passed-case count, and saved source code. A problem must have at least
+five cases before it can be judged.
+
+Write only the requested method or function. The judge supplies `ListNode` and
+common standard-library names. C++ includes the pinned GCC `bits/stdc++.h`
+prelude, Go combines the function with common package imports, Python supplies
+names such as `Counter`, `deque`, `heapq`, `bisect`, and `math`, and Ruby loads
+`Set`. The starter code therefore needs no import or include lines.
 
 An Accepted solution updates your roadmap immediately. Wrong Answer,
-Compilation Error, Runtime Error, and Timeout leave the problem unsolved unless
-you previously solved it. If the judge is unavailable, your submitted code is
-saved so you can retry later.
+Compilation Error, Runtime Error, and Timeout use concise messages without
+compiler output or stack traces. They leave the problem unsolved unless you
+previously solved it. If the judge is unavailable, your submitted code is saved
+so you can retry later.
 
 Use **My submissions** to revisit your own attempts. **Try this problem again**
 restores your latest submitted code. Sign out when finished.

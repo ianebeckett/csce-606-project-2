@@ -13,10 +13,10 @@
     <p><%= link_to "Refresh result", attempt_path(@attempt) %></p>
   <% end %>
   <p class="case-count"><%= @attempt.passed_cases %> / <%= @attempt.total_cases %> test cases passed</p>
-  <p class="muted">Language: Ruby · <%= @attempt.created_at.strftime(ApplicationHelper::SUBMISSION_TIME_FORMAT) %></p>
+  <p class="muted">Language: <%= Attempt.language_version(@attempt.language) %> · <%= @attempt.created_at.strftime(ApplicationHelper::SUBMISSION_TIME_FORMAT) %></p>
   <% if @attempt.error_message.present? %><pre class="error-detail"><%= @attempt.error_message %></pre><% end %>
 </div>
-<h2>Submitted Ruby code</h2><pre class="saved-code"><code><%= @attempt.code %></code></pre>
+<h2>Submitted <%= Attempt.language_name(@attempt.language) %> code</h2><pre class="saved-code"><code><%= @attempt.code %></code></pre>
 <% unless current_user.premium? %><p class="muted">AI code review is available to Premium members. <%= link_to "Upgrade my account", account_path %></p><% end %>
 <div class="attempt-actions">
   <% if current_user.premium? && @attempt.code_review_message %>

@@ -4,7 +4,7 @@
   <section class="description-panel" aria-labelledby="problem-title">
     <p class="eyebrow"><%= @problem.topic.name %></p>
     <h1 id="problem-title"><%= @problem.title %></h1>
-    <div class="badges"><span class="badge easy"><%= @problem.difficulty %></span><span class="badge ruby">Ruby only</span></div>
+    <div class="badges"><span class="badge easy"><%= @problem.difficulty %></span><span class="badge ruby">4 languages</span></div>
     <p class="problem-description"><%= @problem.description %></p>
     <%= render "problems/examples", problem: @problem %>
     <p class="small"><%= link_to "LeetCode", @problem.source_url, rel: "noreferrer" %></p>
@@ -23,7 +23,7 @@
     <p class="locked-note">The editor unlocks once <%= @coaching_session.coach_name %> agrees with your approach.</p>
   </section>
   <% else %>
-  <%= render "problems/editor", problem: @problem, attempt: @attempt %>
+  <%= render "problems/editor", problem: @problem, attempt: @attempt, language: @language %>
   <% end %>
   </div>
 </div>

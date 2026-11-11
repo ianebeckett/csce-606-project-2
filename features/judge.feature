@@ -1,6 +1,6 @@
 Feature: US7 — Online Judge & Error Recovery
   As a candidate
-  I want to execute my Ruby code against predefined cases and see clear outcomes
+  I want to execute my code against predefined cases and see clear outcomes
   So that I can verify and debug my solution
 
   Background:
@@ -27,6 +27,34 @@ Feature: US7 — Online Judge & Error Recovery
       | Premium | binary-search              |
       | Free    | maximum-average-subarray-i |
       | Premium | reverse-linked-list        |
+
+  Scenario Outline: Choose another supported language without JavaScript
+    Given I am signed in as a "Free" member
+    When I submit a correct "<language>" solution for "contains-duplicate"
+    Then I first see a "Pending" result
+    When judging finishes
+    Then I see an "Accepted" result with every predefined case passed
+    And the submission shows "<version>"
+    Examples:
+      | language | version            |
+      | python   | Python 3.15.2      |
+      | go       | Go 1.27.3          |
+      | cpp      | C++23 (GCC 16.2.0) |
+
+  Scenario Outline: Show a concise compilation error
+    Given I am signed in as a "Free" member
+    When I submit invalid "<language>" syntax
+    Then I first see a "Pending" result
+    When judging finishes
+    Then I see the "Compilation Error" verdict and a passed-case count
+    And the page says that my code could not be compiled
+    And compiler output is not displayed
+    Examples:
+      | language |
+      | ruby     |
+      | python   |
+      | go       |
+      | cpp      |
 
   Scenario: Wait behind submissions already in the queue
     Given I am signed in as a "Free" member
@@ -64,11 +92,29 @@ Feature: US7 — Online Judge & Error Recovery
     When I submit again after midnight
     Then only the new submission belongs to the new day's practice session
 
-  Scenario: Reject a non-Ruby submission at the server
+  Scenario: Reject an unsupported language at the server
     Given I am signed in as a "Free" member
-    When I try to submit a solution labelled "python"
-    Then the page explains that only Ruby is supported
+    When I try to submit a solution labelled "javascript"
+    Then the page explains that the language is not supported
     And no submission has been created
+
+  Scenario: Save my code when the remote judge cannot be reached
+    Given I am signed in as a "Free" member
+    And the remote judge cannot be reached
+    When I submit a correct Ruby solution for "contains-duplicate"
+    Then I first see a "Pending" result
+    When judging finishes
+    Then I see the "Judge Unavailable" verdict and a passed-case count
+    And my submitted code is preserved in my personal history
+
+  Scenario: Judge a Go submission through a Heroku one-off dyno
+    Given I am signed in as a "Free" member
+    And Heroku can create an isolated one-off judge dyno
+    When I submit a correct "go" solution for "contains-duplicate"
+    Then I first see a "Pending" result
+    When judging finishes
+    Then I see an "Accepted" result with every predefined case passed
+    And the submission shows "Go 1.27.3"
 
   Scenario: Keep an empty Ruby submission in my history
     Given I am signed in as a "Free" member

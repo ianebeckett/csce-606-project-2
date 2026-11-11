@@ -9,6 +9,7 @@ require "active_support/testing/time_helpers"
 require "active_job/test_helper"
 require_relative "../../spec/support/judge_helpers"
 require_relative "../../spec/fixtures/ruby_solutions"
+require_relative "../../spec/fixtures/language_solutions"
 require_relative "../../spec/support/code_review_helpers"
 
 ActiveRecord::Migration.maintain_test_schema!
@@ -24,4 +25,9 @@ After do
   clear_enqueued_jobs
   clear_performed_jobs
   travel_back
+  if @remote_judge_configured
+    ENV["JUDGE_URL"] = @previous_judge_url
+    ENV["JUDGE_TOKEN"] = @previous_judge_token
+  end
+  Judge::Runner.define_singleton_method(:build, @original_judge_runner_build) if @original_judge_runner_build
 end

@@ -26,10 +26,10 @@ RSpec.describe Judge::Submission do
     session = attempt.practice_session
     original_session = session.attributes
     original_code = attempt.code
-    problem.test_cases.order(:position).each do |test_case|
-      expect(runner).to receive(:call).with(code: attempt.code, problem: problem, input: test_case.input)
-        .and_return({ "status" => "ok", "output" => test_case.expected_output })
-    end
+    cases = problem.test_cases.order(:position).to_a
+    expect(runner).to receive(:call).with(
+      code: attempt.code, language: "ruby", problem: problem, inputs: cases.map(&:input)
+    ).and_return({ "status" => "ok", "outputs" => cases.map(&:expected_output) })
     result = described_class.new(runner: runner).call(attempt)
     expect(result).to equal(attempt)
     expect(attempt.reload.judge_result).to eq("Accepted")
@@ -39,7 +39,8 @@ RSpec.describe Judge::Submission do
   end
 
   it "counts only correctly answered cases" do
-    allow(runner).to receive(:call).and_return({ "status" => "ok", "output" => false })
+    allow(runner).to receive(:call).and_return(
+      { "status" => "ok", "outputs" => Array.new(problem.test_cases.count, false) })
     described_class.new(runner: runner).call(attempt)
     expect(attempt.reload.judge_result).to eq("Wrong Answer")
     expected_passes = problem.test_cases.count { |test_case| test_case.expected_output == false }
@@ -50,11 +51,11 @@ RSpec.describe Judge::Submission do
   it "preserves earlier passed cases and returns the Attempt when execution fails" do
     first_output = problem.test_cases.first.expected_output
     allow(runner).to receive(:call).and_return(
-      { "status" => "ok", "output" => first_output },
-      { "status" => "Runtime Error", "message" => "Execution failed" })
+      { "status" => "Runtime Error", "outputs" => [ first_output ], "message" => "private stack trace" })
     expect(described_class.new(runner: runner).call(attempt)).to equal(attempt)
     expect(attempt.reload.judge_result).to eq("Runtime Error")
-    expect(attempt.error_message).to eq("Execution failed")
+    expect(attempt.error_message).to eq("Your code stopped during execution.")
+    expect(attempt.error_message).not_to include("private stack trace")
     expect(attempt.passed_cases).to eq(1)
   end
 
@@ -64,7 +65,7 @@ RSpec.describe Judge::Submission do
 
       expect(described_class.new(runner: runner).call(attempt)).to equal(attempt)
       expect(attempt.reload.judge_result).to eq("Judge Unavailable")
-      expect(attempt.error_message).to eq("The Ruby judge is unavailable. Your code was saved; please try again later.")
+      expect(attempt.error_message).to eq("The judge is temporarily unavailable. Please try again.")
       expect(attempt.passed_cases).to eq(0)
       expect(attempt.total_cases).to eq(problem.test_cases.count)
     end
@@ -81,10 +82,10 @@ RSpec.describe Judge::Submission do
     problem = Problem.find_by!(slug: "maximum-average-subarray-i")
     submission = create_user.practice_sessions.create!(problem: problem, started_at: Time.current)
       .attempts.create!(code: "def find_max_average(nums, k); 0; end", language: "ruby")
-    problem.test_cases.order(:position).each do |test_case|
-      allow(runner).to receive(:call).with(code: submission.code, problem: problem, input: test_case.input)
-        .and_return({ "status" => "ok", "output" => test_case.expected_output + 0.000001 })
-    end
+    cases = problem.test_cases.order(:position).to_a
+    allow(runner).to receive(:call).with(
+      code: submission.code, language: "ruby", problem: problem, inputs: cases.map(&:input)
+    ).and_return({ "status" => "ok", "outputs" => cases.map { |test_case| test_case.expected_output + 0.000001 } })
     described_class.new(runner: runner).call(submission)
     expect(submission.reload.judge_result).to eq("Accepted")
   end

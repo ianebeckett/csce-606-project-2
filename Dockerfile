@@ -58,7 +58,7 @@ RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 
 
 # Final stage for app image
-FROM base
+FROM base AS app
 
 # Run and own only the runtime files as a non-root user for security
 RUN groupadd --system --gid 1000 rails && \
@@ -72,6 +72,18 @@ COPY --chown=rails:rails --from=build /rails /rails
 # Entrypoint prepares the database.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
-# Start server via Thruster by default, this can be overwritten at runtime
+# Heroku builds these targets as separate process images in one app.
+FROM app AS heroku-release
+CMD ["./bin/rails", "db:migrate", "db:seed"]
+
+FROM app AS heroku-queue
+ENV QUEUE="judge"
+CMD ["bundle", "exec", "rake", "jobs:work"]
+
+FROM app AS heroku-web
+CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]
+
+# Keep the existing Kamal/default image behavior unchanged.
+FROM app AS production
 EXPOSE 80
 CMD ["./bin/thrust", "./bin/rails", "server"]

@@ -20,14 +20,10 @@ RSpec.describe "Spaced Repetition Scheduling" do
 
   it "does not create a review schedule from an accepted submission" do
     # Simulate a successful coding submission
-    problem.test_cases.each do |test_case|
-      allow(runner).to receive(:call)
-                         .with(code: attempt.code, problem: problem, input: test_case.input)
-                         .and_return({
-                                       "status" => "ok",
-                                       "output" => test_case.expected_output
-                                     })
-    end
+    cases = problem.test_cases.order(:position).to_a
+    allow(runner).to receive(:call)
+      .with(code: attempt.code, language: "ruby", problem: problem, inputs: cases.map(&:input))
+      .and_return({ "status" => "ok", "outputs" => cases.map(&:expected_output) })
 
     # Judge the submitted code
     Judge::Submission.new(runner: runner).call(attempt)
@@ -47,7 +43,7 @@ RSpec.describe "Spaced Repetition Scheduling" do
     # Simulate an incorrect submission
     allow(runner).to receive(:call).and_return({
                                                  "status" => "ok",
-                                                 "output" => "incorrect"
+                                                 "outputs" => Array.new(problem.test_cases.count, "incorrect")
                                                })
     Judge::Submission.new(runner: runner).call(attempt)
     expect(attempt.reload.judge_result).to eq(Attempt::WRONG_ANSWER)
