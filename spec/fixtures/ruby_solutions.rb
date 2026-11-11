@@ -2,7 +2,7 @@ module RubySolutions
   CORRECT = {
     "contains-duplicate" => <<~RUBY,
       def contains_duplicate(nums)
-        nums.uniq.length != nums.length
+        Set.new(nums).length != nums.length
       end
     RUBY
     "valid-palindrome" => <<~RUBY,

@@ -93,7 +93,7 @@
       <% end %>
     </section>
 
-    <div class="panel-title"><h2 id="problem-list-title"><%= @topic&.name || "Unlocked problems" %></h2><span class="badge ruby">Ruby only</span></div>
+    <div class="panel-title"><h2 id="problem-list-title"><%= @topic&.name || "Unlocked problems" %></h2><span class="badge ruby">Ruby · Python · Go · C++</span></div>
     <% if @problems.empty? %><p class="empty-state"><%= @topic ? "No problems are available in this topic yet." : "No unlocked problems are available yet." %></p><% end %>
     <% @problems.each_with_index do |problem, index| %>
       <article class="problem-row">

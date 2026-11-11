@@ -1,12 +1,19 @@
+  <% language_path = local_assigns.fetch(:language_path) { ->(candidate) { problem_path(problem, language: candidate) } } %>
   <section class="editor-panel" aria-labelledby="editor-title">
-    <div class="panel-title"><h2 id="editor-title">Your solution</h2><span class="badge ruby">Ruby <%= ApplicationHelper::EXECUTOR_RUBY_VERSION %></span></div>
+    <div class="panel-title"><h2 id="editor-title">Your solution</h2><span class="badge ruby"><%= Attempt.language_version(language) %></span></div>
+    <nav class="language-selector" aria-label="Programming language">
+      <% Attempt::LANGUAGES.each do |candidate| %>
+        <%= link_to Attempt.language_version(candidate), language_path.call(candidate),
+          aria: { current: candidate == language ? "page" : nil } %>
+      <% end %>
+    </nav>
     <%= render "shared/errors", record: attempt %>
     <%= form_with model: attempt, url: problem_attempts_path(problem), local: true do |form| %>
-      <%= form.hidden_field :language, value: Attempt::LANGUAGE %>
-      <%= form.label :code, "Ruby source code" %>
+      <%= form.hidden_field :language, value: language %>
+      <%= form.label :code, "#{Attempt.language_name(language)} source code" %>
       <%= form.text_area :code, rows: ApplicationHelper::CODE_EDITOR_ROWS, spellcheck: false, class: "code-editor", data: { submit_on_ctrl_enter: "" } %>
       <% if problem.ready_for_judging? %>
-        <%= form.submit "Submit Ruby solution (Ctrl + Enter)", class: "button" %>
+        <%= form.submit "Submit #{Attempt.language_name(language)} solution (Ctrl + Enter)", class: "button" %>
       <% else %>
         <p role="status">This problem is not ready for judging: at least five cases are required.</p>
       <% end %>

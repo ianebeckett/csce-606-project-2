@@ -30,6 +30,6 @@ RSpec.describe JudgeSubmissionJob do
 
     expect(attempt.reload).to have_attributes(
       code: "saved source", judge_result: "Judge Unavailable", passed_cases: 0, total_cases: 6,
-      error_message: "The Ruby judge is unavailable. Your code was saved; please try again later.")
+      error_message: "The judge is unavailable. Your code was saved; please try again later.")
   end
 end

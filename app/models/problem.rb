@@ -38,6 +38,10 @@ class Problem < ApplicationRecord
     slug
   end
 
+  def starter_code_for(language)
+    Judge::Language.starter_code(self, language)
+  end
+
   private
 
   def interview_details_shape

@@ -98,6 +98,9 @@ nav form { margin: 0; }
 .example h3 { color: var(--muted); font-size: .75rem; margin-bottom: .5rem; }
 pre { font: .82rem/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
 .editor-panel form { padding: 1.5rem; }
+.language-selector { display: flex; flex-wrap: wrap; gap: .5rem; padding: 1rem 1.5rem 0; }
+.language-selector a { border: 1px solid var(--border); border-radius: 6px; padding: .45rem .7rem; text-decoration: none; }
+.language-selector a[aria-current="page"] { border-color: var(--accent); background: var(--example-bg); }
 label { display: block; font-size: .85rem; margin-bottom: .4rem; }
 input:not([type=submit]):not([type=hidden]), textarea { width: 100%; padding: .75rem; color: var(--text); background: var(--bg); border: 1px solid var(--input-border); border-radius: 6px; margin-bottom: 1rem; }
 .code-editor { font: .87rem/1.8 ui-monospace, SFMono-Regular, Menlo, monospace; tab-size: 2; resize: vertical; min-height: 360px; }

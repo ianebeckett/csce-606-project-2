@@ -3,6 +3,7 @@
 <h1><%= @attempt.problem.title %></h1>
 <p>Topic: <%= @attempt.problem.topic.name %></p>
 <p>Submitted: <%= @attempt.created_at.strftime(ApplicationHelper::SUBMISSION_TIME_FORMAT) %></p>
+<p>Language: <%= Attempt.language_version(@attempt.language) %></p>
 
 <section aria-labelledby="attempt-result">
   <h2 id="attempt-result">Judge result</h2>

@@ -77,6 +77,19 @@ RSpec.describe "Turn-based interview", type: :request do
       expect(response).to redirect_to(attempt_path(Attempt.last))
     end
 
+    it "keeps language selection inside the interview after unlocking the editor" do
+      session = interview_session(premium)
+      session.update!(interview_state: "coding", coaching_state: "complexity")
+
+      get problem_interview_path(problem, language: "python")
+
+      expect(response.body).to include("Python source code", "Python 3.15.2")
+      document = Nokogiri::HTML(response.body)
+      expect(document.at_css('input[name="attempt[language]"]')["value"]).to eq("python")
+      expect(document.at_css('a[aria-current="page"]')["href"])
+        .to eq(problem_interview_path(problem, language: "python"))
+    end
+
     it "on AI outage keeps the message, saves no reply, unlocks" do
       use_ai_client(Ai::FakeClient.new(error: Ai::Error.new("x")))
       say("hello")

@@ -106,6 +106,35 @@ RSpec.describe "Online Judge requests", type: :request do
     expect(response).to have_http_status(:not_found)
   end
 
+  it "selects one fixed version of each supported language without JavaScript" do
+    sign_in(user)
+    problem = Problem.find_by!(slug: "contains-duplicate")
+
+    {
+      "ruby" => "Ruby 4.0.1",
+      "python" => "Python 3.15.2",
+      "go" => "Go 1.27.3",
+      "cpp" => "C++23 (GCC 16.2.0)"
+    }.each do |language, version|
+      get problem_path(problem, language: language)
+      expect(response.body).to include(version)
+      document = Nokogiri::HTML(response.body)
+      expect(document.at_css('input[name="attempt[language]"]')["value"]).to eq(language)
+      expect(response.body).to include("#{Attempt.language_name(language)} source code")
+    end
+  end
+
+  it "rejects a language that is not offered by the server" do
+    sign_in(user)
+    problem = Problem.find_by!(slug: "contains-duplicate")
+
+    expect do
+      post problem_attempts_path(problem), params: { attempt: { code: "solution", language: "javascript" } }
+    end.not_to change(Attempt, :count)
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("is not supported")
+  end
+
   it "groups retries by day and restores the user's latest code across sessions" do
     sign_in(user)
     problem = Problem.first
@@ -153,7 +182,7 @@ RSpec.describe "Online Judge requests", type: :request do
     perform_enqueued_jobs
 
     expect(attempt.reload.judge_result).to eq("Judge Unavailable")
-    expect(attempt.error_message).to eq("The Ruby judge is unavailable. Your code was saved; please try again later.")
+    expect(attempt.error_message).to eq("The judge is temporarily unavailable. Please try again.")
     get attempt_path(attempt)
     expect(response.body).to include("Judge Unavailable")
     expect(response.body).not_to include("Refresh result")

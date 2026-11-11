@@ -28,9 +28,13 @@ class ProblemsController < ApplicationController
     @problem = Problem.includes(:test_cases).find_by!(slug: params[:id])
     return unless require_unlocked_topic(@problem.topic)
 
-    previous = current_user.attempts.joins(:practice_session).where(practice_sessions: { problem_id: @problem.id })
-      .order(created_at: :desc, id: :desc).first
-    @attempt = Attempt.new(code: previous&.code.presence || @problem.starter_code, language: Attempt::LANGUAGE)
+    attempts = current_user.attempts.joins(:practice_session).where(practice_sessions: { problem_id: @problem.id })
+    latest = attempts.order(created_at: :desc, id: :desc).first
+    requested = params[:language].presence || latest&.language || Attempt::LANGUAGE
+    @language = Attempt::LANGUAGES.include?(requested) ? requested : Attempt::LANGUAGE
+    previous = attempts.where(language: @language).order(created_at: :desc, id: :desc).first
+    code = previous&.code.presence || @problem.starter_code_for(@language)
+    @attempt = Attempt.new(code: code, language: @language)
     @coaching_session = current_user.practice_sessions.for_today(@problem) if current_user.premium?
   end
 end

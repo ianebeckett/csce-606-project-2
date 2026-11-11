@@ -36,4 +36,3 @@ const openPracticeRatingModal = () => {
 
 document.addEventListener("turbo:load", openPracticeRatingModal)
 document.addEventListener("DOMContentLoaded", openPracticeRatingModal)
-
