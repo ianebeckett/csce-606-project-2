@@ -10,6 +10,9 @@ class AttemptsController < ApplicationController
 
   def show
     @attempt = current_user.attempts.includes(practice_session: :problem).find(params[:id])
+    if @attempt.judge_result == Attempt::PENDING && !@attempt.judging_started_at
+      @queue_wait = Judge::Queue.new.wait_for(@attempt)
+    end
   end
 
   def create
@@ -25,12 +28,16 @@ class AttemptsController < ApplicationController
     end
 
     @attempt.practice_session = current_user.practice_sessions.for_today(@problem)
-    if @attempt.save
-      Judge::Submission.new.call(@attempt)
+    @attempt.total_cases = @problem.test_cases.size
+    if Judge::Queue.new.submit(@attempt)
       redirect_to attempt_path(@attempt)
     else
       render "problems/show", status: :unprocessable_content
     end
+  rescue Judge::Queue::Full => error
+    response.set_header("Retry-After", error.retry_after.to_s)
+    @attempt.errors.add(:base, error.message)
+    render "problems/show", status: :service_unavailable
   end
 
   private

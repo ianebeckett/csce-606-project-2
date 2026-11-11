@@ -19,7 +19,7 @@ Given("I completed and rated {string} two days ago") do |title|
 
     # Open the actual submission results page
     visit attempt_path(attempt)
-    select "1 - Very difficult", from: "Your performance rating"
+    choose "review_rating_1"
 
     # Submit the rating using the Rails form
     click_button "Complete Practice"

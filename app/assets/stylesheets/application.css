@@ -151,6 +151,7 @@ th { color: var(--muted); font-size: .75rem; }
 }
 
 
+
 .upcoming-reviews-header {
   display: flex;
   align-items: center;
@@ -167,13 +168,6 @@ th { color: var(--muted); font-size: .75rem; }
 .upcoming-reviews-header span {
   color: var(--accent);
   font-size: 0.8rem;
-  white-space: nowrap;
-}
-
-.upcoming-reviews-header span {
-  color: var(--accent);
-  font-size: 0.8rem;
-  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -237,92 +231,141 @@ th { color: var(--muted); font-size: .75rem; }
   color: var(--accent);
 }
 
-
-/* Due Reviews dashboard cards */
-.due-review-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1.25rem 1.5rem;
-}
-
-.due-review-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 1.5rem 1.75rem;
+/* Practice rating modal */
+.rating-modal {
+  width: min(620px, calc(100vw - 2rem));
+  max-width: none;
+  padding: 0;
+  border: 1px solid var(--notice-border);
+  border-radius: 18px;
   background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-}
-
-.due-review-info h3 {
-  margin-bottom: 0.4rem;
-}
-
-.due-review-info h3 a {
   color: var(--text);
-  text-decoration: none;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .65);
 }
 
-.due-review-info h3 a:hover {
-  color: var(--accent);
+.rating-modal::backdrop {
+  background: rgba(5, 7, 12, .82);
+  backdrop-filter: blur(5px);
 }
 
-.due-review-info p {
-  margin-bottom: 0;
-}
-
-.due-review-action {
-  color: var(--accent);
-  font-weight: 600;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.due-review-action:hover {
-  color: var(--accent);
-  text-decoration: none;
-}
-
-.due-review-action:hover {
-  text-decoration: underline;
-}
-
-@media (max-width: 600px) {
-  .due-review-card {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-}
-
-.due-reviews-view-all {
-  padding: 0 1.5rem 1.25rem;
+.rating-modal__content {
+  padding: clamp(1.5rem, 4vw, 2.5rem);
   text-align: center;
 }
 
-.due-reviews-view-all a {
+.rating-modal .eyebrow {
+  margin-bottom: .6rem;
+}
+
+.rating-modal h2 {
+  font-size: clamp(1.6rem, 4vw, 2rem);
+  color: var(--text);
+  margin-bottom: .6rem;
+}
+
+.rating-modal__description {
+  color: var(--muted);
+  margin-bottom: 1.7rem;
+}
+
+.rating-options {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: .65rem;
+  border: 0;
+  padding: 0;
+  margin: 0 0 1.6rem;
+}
+
+.rating-option {
+  min-width: 0;
+}
+
+.rating-option input[type="radio"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.rating-choice {
+  min-height: 110px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: .55rem;
+  padding: .8rem .35rem;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--example-bg);
+  cursor: pointer;
+  transition: border-color .2s, background .2s, transform .2s;
+}
+
+.rating-choice:hover {
+  border-color: var(--accent);
+  transform: translateY(-3px);
+}
+
+.rating-choice__number {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--topic-selected);
   color: var(--accent);
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-decoration: none;
+  font-size: 1.2rem;
+  font-weight: 750;
 }
 
-.due-reviews-view-all a:hover {
-  text-decoration: underline;
+.rating-choice__label {
+  color: var(--muted);
+  font-size: .7rem;
+  line-height: 1.3;
+  text-align: center;
 }
 
-.problem-panel section[aria-labelledby="due-reviews-title"] a {
-  text-decoration: none;
+.rating-option input:checked + .rating-choice {
+  border-color: var(--accent);
+  background: var(--topic-selected);
 }
 
-.problem-panel section[aria-labelledby="due-reviews-title"] a:hover {
-  color: var(--accent);
+.rating-option input:checked + .rating-choice .rating-choice__number {
+  background: var(--accent);
+  color: var(--button-text);
 }
 
-.review-table-wrap .due-review-action,
-.review-table-wrap .due-review-action:hover {
-  text-decoration: none;
+.rating-option input:focus-visible + .rating-choice {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.rating-submit {
+  width: 100%;
+  min-height: 52px;
+  font-size: 1rem;
+  border-radius: 9px;
+}
+
+@media (max-width: 500px) {
+  .rating-options {
+    gap: .35rem;
+  }
+
+  .rating-choice {
+    min-height: 95px;
+    padding: .5rem .2rem;
+  }
+
+  .rating-choice__label {
+    font-size: .62rem;
+  }
 }

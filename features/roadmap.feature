@@ -27,7 +27,7 @@ Feature: US1 — Roadmap & Problem Discovery
   Scenario: A correct judged solution masters a topic and unlocks its dependent topic
     Given I am signed in as a "Free" member
     When I submit a correct Ruby solution for "contains-duplicate"
-    And I open the roadmap
+    And I open the roadmap after judging finishes
     Then the roadmap shows "Arrays & Hashing" as "Mastered"
     And the roadmap shows "Two Pointers" as "In Progress"
     And I see "Contains Duplicate" with difficulty "Easy" and status "Accepted"

@@ -16,6 +16,38 @@ end
 Then("I am asked to sign in") { expect(page).to have_content("Please sign in to practice.") }
 Then("no submission has been created") { expect(Attempt.count).to eq(0) }
 
+Given("the judge queue contains {int} Pending submissions") do |count|
+  expect(Judge::Queue::MAX_PENDING).to eq(10)
+  problem = Problem.find_by!(slug: "contains-duplicate")
+  other = create_user(email: "queue-owner@example.com")
+  session = other.practice_sessions.for_today(problem)
+  count.times do
+    session.attempts.create!(code: "earlier submission", total_cases: problem.test_cases.count)
+  end
+  @pending_count = Attempt.count
+end
+
+Then("I am told when to retry without losing my code") do
+  expect(page.status_code).to eq(503)
+  expect(page.response_headers.fetch("Retry-After")).to eq("65")
+  expect(page).to have_content("The judge is at capacity (10 pending submissions)")
+  expect(page).to have_content("try again in about 65 seconds")
+  expect(page).to have_content("not queued")
+  expect(page.find_field("Ruby source code").value.gsub(/\r\n?/, "\n")).to eq(@submitted_code)
+  expect(Attempt.count).to eq(@pending_count)
+  expect(enqueued_jobs).to be_empty
+end
+
+Then("I see a Pending result with 9 submissions ahead and an estimated wait of 545 seconds") do
+  expect(@attempt.reload.judge_result).to eq(Attempt::PENDING)
+  expect(Attempt.where(judge_result: Attempt::PENDING).count).to eq(10)
+  expect(page).to have_content(Attempt::PENDING)
+  expect(page).to have_content("9 submissions ahead")
+  expect(page).to have_content("about 545 seconds")
+  expect(page).to have_content("estimate")
+  expect(page).to have_link("Refresh result", href: attempt_path(@attempt))
+end
+
 When("I submit a correct Ruby solution for {string}") do |slug|
   @problem = Problem.find_by!(slug: slug)
   @submitted_code = RubySolutions::CORRECT.fetch(slug)
@@ -26,11 +58,23 @@ When("I submit a correct Ruby solution for {string}") do |slug|
   @attempt = Attempt.order(:id).last
 end
 
+Then("I first see a {string} result") do |verdict|
+  expect(page).to have_content(verdict)
+  expect(@attempt.reload.judge_result).to eq(verdict)
+  expect(page).to have_link("Refresh result", href: attempt_path(@attempt))
+end
+
+When("judging finishes") do
+  perform_enqueued_jobs
+  click_link "Refresh result"
+end
+
 Then("I see an {string} result with every predefined case passed") do |verdict|
   expect(page).to have_content(verdict)
   expect(page).to have_content("#{@problem.test_cases.count} / #{@problem.test_cases.count} test cases passed")
   expect(@attempt.reload.judge_result).to eq(verdict)
   expect(@attempt.total_cases).to be >= 5
+  expect(page).not_to have_link("Refresh result")
 end
 
 Then("my submitted code is preserved in my personal history") do
@@ -58,9 +102,11 @@ When("I submit a Ruby solution with {string}") do |failure|
 end
 
 Then("I see the {string} verdict and a passed-case count") do |verdict|
+  @attempt.reload
   expect(page).to have_content(verdict)
   expect(page).to have_content("#{@attempt.passed_cases} / #{@attempt.total_cases} test cases passed")
-  expect(@attempt.reload.judge_result).to eq(verdict)
+  expect(@attempt.judge_result).to eq(verdict)
+  expect(page).not_to have_link("Refresh result")
 end
 
 Then("I can still open the problem and read my submitted code") do
@@ -74,6 +120,7 @@ end
 Given("I am practicing just before midnight in Chicago") { travel_to(Time.utc(2026, 10, 21, 4, 59, 59)) }
 
 Then("my two submissions belong to today's practice session") do
+  perform_enqueued_jobs
   @previous_session = @user.practice_sessions.sole
   expect(@previous_session.practice_date).to eq(Date.new(2026, 10, 20))
   expect(@previous_session.attempts.count).to eq(2)
@@ -88,6 +135,8 @@ When("I submit again after midnight") do
 end
 
 Then("only the new submission belongs to the new day's practice session") do
+  perform_enqueued_jobs
+  click_link "Refresh result"
   expect(@user.practice_sessions.count).to eq(2)
   expect(@attempt.practice_session.practice_date).to eq(Date.new(2026, 10, 21))
   expect(@attempt.practice_session.attempts.pluck(:id)).to eq([ @attempt.id ])

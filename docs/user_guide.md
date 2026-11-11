@@ -67,3 +67,37 @@ If the AI service is down or sends back something the app can't use, you'll see 
 Free members see "AI code review is available to Premium members." on the submission page instead of the review button. Everything else, including submitting solutions and seeing judge results, works the same.
 
 ![A Free member's submission page, showing the Premium notice instead of the review button](images/ai-code-review-free-member.png)
+
+## Interview mode (Premium)
+
+Interview mode lets Premium members rehearse a real coding interview. You start from a deliberately vague problem, ask clarifying questions, explain a plan, and adapt when the interviewer changes a requirement.
+
+### Starting an interview
+
+1. Open any problem that has interview content.
+2. Click **Practice as an interview**.
+3. The interview page shows the vague statement, your conversation with the interviewer, a message box, and a note that the editor is locked.
+
+Leaving and coming back the same day resumes the same interview.
+
+### The three stages
+
+1. **Clarify.** Ask questions about the problem. The interviewer answers only what you ask. Once you have asked about enough of the missing details, the interviewer asks for your plan, and the page lists what you have learned so far.
+2. **Strategy.** Describe your approach. When the interviewer judges it sound for the requirements, it posts a changed requirement, and the page then shows the full problem statement and examples.
+3. **Twist.** Explain how you would adapt your solution. When the interviewer is satisfied, the editor unlocks.
+
+The interviewer never writes code for you, and it does not hand out details you have not asked about.
+
+![An interview for Contains Duplicate at the twist stage: the interviewer has changed the list size, the full problem is shown, and the editor is still locked](images/interview-mode.png)
+
+### Coding
+
+Once the editor is unlocked, submit your solution on the interview page. The usual judge runs it against the problem's tests, and the result page is the same as for any other submission. Finishing the interview also unlocks the editor on the normal problem page for that day.
+
+### If the interviewer is unavailable
+
+If the AI service is down or sends back something the app can't use, you'll see "The interviewer is unavailable right now. Your message is saved, and the editor is unlocked." Your message stays in the conversation and you can start coding right away.
+
+### Free members
+
+Free members who try to open an interview are sent back to the problem page with "The interviewer is a Premium feature." Everything else works the same.

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_28_213854) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_08_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -24,6 +24,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_28_213854) do
     t.text "error_message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "judging_started_at"
+    t.index ["judge_result"], name: "index_attempts_on_judge_result"
     t.index ["practice_session_id"], name: "index_attempts_on_practice_session_id"
     t.check_constraint "language::text = 'ruby'::text", name: "attempts_ruby_only"
     t.check_constraint "passed_cases >= 0 AND total_cases >= passed_cases", name: "attempts_case_counts"
@@ -41,6 +43,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_28_213854) do
     t.index ["practice_session_id"], name: "index_conversation_messages_on_practice_session_id"
   end
 
+  create_table "delayed_jobs", force: :cascade do |t|
+    t.integer "priority", default: 0, null: false
+    t.integer "attempts", default: 0, null: false
+    t.text "handler", null: false
+    t.text "last_error"
+    t.datetime "run_at"
+    t.datetime "locked_at"
+    t.datetime "failed_at"
+    t.string "locked_by"
+    t.string "queue"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.index ["priority", "run_at"], name: "delayed_jobs_priority"
+  end
+
   create_table "practice_sessions", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "problem_id", null: false
@@ -56,6 +73,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_28_213854) do
     t.string "coach_persona", default: "senior_swe", null: false
     t.datetime "review_scheduled_at"
     t.integer "review_base_interval_days"
+    t.string "interview_state", default: "not_started", null: false
     t.index ["problem_id"], name: "index_practice_sessions_on_problem_id"
     t.index ["user_id", "problem_id", "practice_date"], name: "index_practice_sessions_on_user_problem_date", unique: true
     t.index ["user_id"], name: "index_practice_sessions_on_user_id"
@@ -74,6 +92,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_28_213854) do
     t.text "starter_code", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "interview_prompt"
+    t.json "interview_details"
+    t.text "interview_twist"
     t.index ["slug"], name: "index_problems_on_slug", unique: true
     t.index ["topic_id"], name: "index_problems_on_topic_id"
   end
