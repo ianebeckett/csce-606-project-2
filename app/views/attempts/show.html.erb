@@ -3,6 +3,15 @@
 <p class="eyebrow">SUBMISSION #<%= @attempt.id %></p><h1><%= @attempt.problem.title %></h1>
 <div class="result-card" role="status">
   <h2><%= @attempt.judge_result %></h2>
+  <% if @attempt.judge_result == Attempt::PENDING %>
+    <% if @attempt.judging_started_at %>
+      <p>Judging has started.</p>
+    <% else %>
+      <p><%= @queue_wait.fetch(:count) %> submissions ahead. Estimated wait before judging starts: about <%= @queue_wait.fetch(:seconds) %> seconds.</p>
+    <% end %>
+    <p>This is an estimate while the judge is running. Delays, restarts, or retries can take longer.</p>
+    <p><%= link_to "Refresh result", attempt_path(@attempt) %></p>
+  <% end %>
   <p class="case-count"><%= @attempt.passed_cases %> / <%= @attempt.total_cases %> test cases passed</p>
   <p class="muted">Language: Ruby · <%= @attempt.created_at.strftime(ApplicationHelper::SUBMISSION_TIME_FORMAT) %></p>
   <% if @attempt.error_message.present? %><pre class="error-detail"><%= @attempt.error_message %></pre><% end %>
@@ -30,30 +39,52 @@
       !already_rated %>
 
 
-  <section aria-labelledby="review-rating-title">
-    <h2 id="review-rating-title">Complete Your Practice</h2>
 
-    <p>How well did you understand this problem?</p>
+  <dialog id="practice-rating-modal" class="rating-modal"
+          aria-labelledby="review-rating-title">
+    <div class="rating-modal__content">
+      <p class="eyebrow">PRACTICE COMPLETE</p>
 
-    <%= form_with url: rate_practice_session_path(practice),
-                  method: :patch,
-                  local: true do |form| %>
-      <%= form.hidden_field :attempt_id, value: @attempt.id %>
+      <h2 id="review-rating-title">How did that feel?</h2>
 
-      <%= form.label :review_rating, "Your performance rating" %>
+      <p class="rating-modal__description">
+        How well did you understand this problem?
+        Your rating helps us schedule your next review date.
+      </p>
 
-      <%= form.select :review_rating,
-                      [
-                        ["1 - Very difficult", 1],
-                        ["2 - Difficult", 2],
-                        ["3 - Moderate", 3],
-                        ["4 - Easy", 4],
-                        ["5 - Very easy", 5]
-                      ],
-                      { prompt: "Select your rating" },
-                      { required: true } %>
+      <%= form_with url: rate_practice_session_path(practice),
+                    method: :patch,
+                    local: true,
+                    class: "rating-form" do |form| %>
+        <%= form.hidden_field :attempt_id, value: @attempt.id %>
 
-      <%= form.submit "Complete Practice" %>
-    <% end %>
-  </section>
+        <fieldset class="rating-options">
+          <legend class="sr-only">Your performance rating</legend>
+
+          <% [
+               [1, "Very difficult"],
+               [2, "Difficult"],
+               [3, "Moderate"],
+               [4, "Easy"],
+               [5, "Very easy"]
+             ].each do |value, description| %>
+            <div class="rating-option">
+              <%= form.radio_button :review_rating, value,
+                                    id: "review_rating_#{value}", required: true %>
+
+              <%= form.label :review_rating,
+                             for: "review_rating_#{value}",
+                             class: "rating-choice" do %>
+                <span class="rating-choice__number"><%= value %></span>
+                <span class="rating-choice__label"><%= description %></span>
+              <% end %>
+            </div>
+          <% end %>
+        </fieldset>
+
+        <%= form.submit "Complete Practice",
+                        class: "button rating-submit" %>
+      <% end %>
+    </div>
+  </dialog>
 <% end %>

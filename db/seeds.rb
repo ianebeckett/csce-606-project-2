@@ -5,12 +5,16 @@ ActiveRecord::Base.transaction do
     topic = Topic.find_or_initialize_by(name: definition.fetch(:topic))
     topic.update!(position: index)
     problem = Problem.find_or_initialize_by(slug: definition.fetch(:slug))
+    interview = definition[:interview]
     problem.update!(
       topic: topic, title: definition.fetch(:title), description: definition.fetch(:description),
       difficulty: Problem::EASY, source_url: format(Problem::SOURCE_URL_FORMAT, definition.fetch(:slug)),
       method_name: definition.fetch(:method_name), input_kind: definition.fetch(:input_kind, Problem::ARGUMENTS_INPUT),
       comparison: definition.fetch(:comparison, Problem::EXACT_COMPARISON),
-      starter_code: "def #{definition.fetch(:method_name)}(#{definition.fetch(:arguments)})\nend\n"
+      starter_code: "def #{definition.fetch(:method_name)}(#{definition.fetch(:arguments)})\nend\n",
+      interview_prompt: interview&.fetch(:prompt),
+      interview_details: interview&.fetch(:details)&.map { |detail| detail.stringify_keys },
+      interview_twist: interview&.fetch(:twist)
     )
     definition.fetch(:cases).each_with_index do |(arguments, output), position|
       test_case = problem.test_cases.find_or_initialize_by(position: position)

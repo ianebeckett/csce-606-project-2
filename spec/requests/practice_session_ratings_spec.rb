@@ -31,7 +31,7 @@ RSpec.describe "Practice Session Ratings", type: :request do
     expect(response).to redirect_to(problems_path)
 
     get attempt_path(attempt)
-    expect(response.body).to include("Complete Your Practice")
+    expect(response.body).to include("How well did you understand this problem?")
     patch rate_practice_session_path(practice),
           params: { review_rating: "1", attempt_id: attempt.id }
 
@@ -191,9 +191,10 @@ RSpec.describe "Practice Session Ratings", type: :request do
     )
 
     get attempt_path(first_attempt)
-    expect(response.body).not_to include("Complete Your Practice")
+    expect(response.body).not_to include("How well did you understand this problem?"
+                                 )
     get attempt_path(second_attempt)
-    expect(response.body).to include("Complete Your Practice")
+    expect(response.body).to include("How well did you understand this problem?")
     patch rate_practice_session_path(practice),
           params: { review_rating: 5, attempt_id: second_attempt.id }
 
@@ -207,6 +208,7 @@ RSpec.describe "Practice Session Ratings", type: :request do
     ).count).to eq(1)
 
     get attempt_path(second_attempt)
-    expect(response.body).not_to include("Complete Your Practice")
+    expect(response.body).not_to include("How well did you understand this problem?"
+                                 )
   end
 end

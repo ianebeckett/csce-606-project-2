@@ -1,0 +1,52 @@
+<% content_for :title, "#{@problem.title} interview · Code Coach" %>
+<%= link_to "← Back to problem", problem_path(@problem), class: "back-link" %>
+<div class="workspace">
+  <section class="description-panel" aria-labelledby="problem-title">
+    <p class="eyebrow"><%= @problem.topic.name %></p>
+    <h1 id="problem-title"><%= @problem.title %></h1>
+    <h2>What the interviewer told you</h2>
+    <p class="problem-description"><%= @problem.interview_prompt %></p>
+    <% if @practice_session.interview_clarified? && !@practice_session.interview_twist_revealed? %>
+      <h2>What you've learned</h2>
+      <ul class="learned-details">
+        <% @problem.interview_details.each do |detail| %>
+          <li><%= detail["fact"] %></li>
+        <% end %>
+      </ul>
+    <% end %>
+    <% if @practice_session.interview_twist_revealed? %>
+      <h2>Problem</h2>
+      <p class="problem-description"><%= @problem.description %></p>
+      <%= render "problems/examples", problem: @problem %>
+    <% end %>
+  </section>
+  <div class="work-column">
+  <section class="coach-panel" aria-labelledby="interviewer-title">
+    <div class="panel-title"><h2 id="interviewer-title">Interviewer</h2></div>
+    <div class="coach-body">
+      <p class="coach-step"><%= interview_step_hint(@practice_session) %></p>
+      <ol class="conversation">
+        <% @practice_session.conversation_messages.interview.chronological.each do |message| %>
+          <li class="conversation-message <%= message.role %>">
+            <strong><%= message.role == "user" ? "You" : "Interviewer" %></strong>
+            <%= simple_format(message.content) %>
+          </li>
+        <% end %>
+      </ol>
+      <%= form_with model: ConversationMessage.new, url: problem_interview_messages_path(@problem), local: true do |form| %>
+        <%= form.label :content, "Your message" %>
+        <%= form.text_area :content, rows: 4, required: true, data: { submit_on_ctrl_enter: "" } %>
+        <%= form.submit "Send (Ctrl + Enter)", class: "button" %>
+      <% end %>
+    </div>
+  </section>
+  <% if @practice_session.interview_locked? %>
+  <section class="editor-panel locked-editor" aria-labelledby="editor-title">
+    <div class="panel-title"><h2 id="editor-title">Your solution</h2></div>
+    <p class="locked-note">The editor unlocks once you and the interviewer agree on your approach.</p>
+  </section>
+  <% else %>
+  <%= render "problems/editor", problem: @problem, attempt: @attempt %>
+  <% end %>
+  </div>
+</div>

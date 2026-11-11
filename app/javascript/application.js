@@ -10,3 +10,30 @@ document.addEventListener("keydown", (event) => {
   event.preventDefault()
   field.form?.requestSubmit()
 })
+
+
+// Automatically open the practice rating modal
+
+const openPracticeRatingModal = () => {
+  const modal = document.getElementById("practice-rating-modal")
+
+  if (!modal) return
+
+  // Prevent closing the modal with Esc
+  if (!modal.dataset.dismissLocked) {
+    modal.addEventListener("cancel", (event) => {
+      event.preventDefault()
+    })
+
+    modal.dataset.dismissLocked = "true"
+  }
+
+  if (!modal.open) {
+    modal.showModal()
+  }
+}
+
+
+document.addEventListener("turbo:load", openPracticeRatingModal)
+document.addEventListener("DOMContentLoaded", openPracticeRatingModal)
+
