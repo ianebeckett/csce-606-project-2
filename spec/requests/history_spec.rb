@@ -22,10 +22,11 @@ RSpec.describe "Learning history pages", type: :request do
     get history_index_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(
+    history_text = Nokogiri::HTML(response.body).text.gsub(/\s+/, " ")
+    expect(history_text).to include(
       "Problems solved: 1",
       "Reviews scheduled: 1",
-      ERB::Util.html_escape(problem.topic.name).to_s,
+      problem.topic.name,
       "1 / 1 problems solved",
       problem.title,
       Attempt::ACCEPTED
@@ -51,7 +52,8 @@ RSpec.describe "Learning history pages", type: :request do
     get history_index_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(
+    history_text = Nokogiri::HTML(response.body).text.gsub(/\s+/, " ")
+    expect(history_text).to include(
       "Problems solved: 0",
       "Reviews scheduled: 0",
       "No practice history yet."
