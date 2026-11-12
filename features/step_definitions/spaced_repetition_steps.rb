@@ -86,7 +86,7 @@ Then("I see the dates for those upcoming reviews") do
 end
 
 Then("I can open the full upcoming reviews list") do
-  expect(page).to have_link("View all", href: reviews_path)
+  expect(page).to have_link("View All", href: reviews_path)
 end
 
 When("I select the upcoming reviews {string} link") do |link_text|

@@ -39,5 +39,5 @@ Feature: US2 — Spaced Repetition
     Given I am signed in as a "Free" member
     And I have three upcoming reviews scheduled
     When I open the roadmap
-    And I select the upcoming reviews "View all" link
+    And I select the upcoming reviews "View All" link
     Then I see all three upcoming reviews in date order
