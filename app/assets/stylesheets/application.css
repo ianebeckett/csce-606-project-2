@@ -47,7 +47,17 @@ nav form { margin: 0; }
 .muted { color: var(--muted); }
 .small { font-size: .8rem; }
 .page-heading { display: flex; align-items: center; justify-content: space-between; gap: 2rem; margin-bottom: 2.5rem; }
-.stat-card { border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 2rem; display: flex; flex-direction: column; min-width: 190px; background: var(--panel); }
+.stat-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  min-width: 190px;
+  background: var(--panel);
+  align-self: stretch;
+  justify-content: center;
+}
 .stat-card strong { font-size: 2.5rem; line-height: 1.2; color: var(--accent); }
 .stat-card strong span { font-size: 1.5rem; color: var(--muted); }
 .stat-card > span { color: var(--muted); font-size: .8rem; }
@@ -129,6 +139,100 @@ th { color: var(--muted); font-size: .75rem; }
 .locked-note { padding: 1.5rem; margin: 0; color: var(--muted); }
 
 
+.upcoming-reviews-card {
+  display: block;
+  flex: 1;
+  max-width: 716px;
+  min-width: 0;
+  padding: 1rem 1.25rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color 0.2s ease;
+}
+
+
+
+.upcoming-reviews-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.upcoming-reviews-header h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.upcoming-reviews-header span {
+  color: var(--accent);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.upcoming-review-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding-top: 0.65rem;
+  margin-top: 0.65rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+
+.upcoming-review-item span:last-child {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.upcoming-reviews-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 700px) {
+  .page-heading {
+    flex-wrap: wrap;
+  }
+
+  .upcoming-reviews-card {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+}
+
+.review-page-actions {
+  margin-top: 1.25rem;
+}
+
+.review-table-wrap {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.review-table-wrap table {
+  background: transparent;
+}
+
+.review-table-wrap tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.review-table-wrap tbody td:first-child a {
+  text-decoration: none;
+}
+
+.review-table-wrap tbody td:first-child a:hover {
+  color: var(--accent);
+}
 
 /* Practice rating modal */
 .rating-modal {

@@ -12,6 +12,16 @@ class ProblemsController < ApplicationController
     @due_reviews = current_user.review_schedules.due
                                .includes(:problem)
                                .order(:next_review_date)
+
+    @due_reviews_count = @due_reviews.count
+    @due_reviews = @due_reviews.limit(2)
+
+    # Get the student's upcoming reviews
+    @upcoming_reviews = current_user.review_schedules
+                                    .includes(:problem)
+                                    .where("next_review_date > ?", Date.current)
+                                    .order(:next_review_date)
+    @upcoming_reviews_preview = @upcoming_reviews.limit(2)
   end
 
   def show
