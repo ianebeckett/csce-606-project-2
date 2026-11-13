@@ -32,3 +32,12 @@ Feature: My account
   Scenario: The account page requires signing in
     When I visit my account
     Then I am asked to sign in
+
+  Scenario: A member unlocks all problems for the user study
+    Given I am signed in as a "Free" member
+    When I visit my account
+    And I click "Unlock all problems"
+    Then I see "All problems are unlocked."
+    When I open the roadmap
+    Then the roadmap shows "Two Pointers" as "In Progress"
+    And I can open "Valid Palindrome" for practice

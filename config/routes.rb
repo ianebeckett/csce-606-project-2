@@ -14,7 +14,10 @@ Rails.application.routes.draw do
 
   resource :session, only: [ :new, :create, :destroy ]
   resource :registration, only: [ :new, :create ]
-  resource :account, only: [ :show, :update ]
+  resource :account, only: [ :show, :update ] do
+    # User-study switch: open every topic regardless of prerequisites
+    patch :problem_access
+  end
   resources :problems, only: [ :index, :show ] do
     resources :attempts, only: :create
     resources :coaching_messages, only: :create

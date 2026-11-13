@@ -52,6 +52,13 @@ RSpec.describe Roadmap do
     expect(described_class.new(user).state(window)).to eq("In Progress")
   end
 
+  it "opens every topic when the member has unlocked all problems" do
+    user.update!(all_problems_unlocked: true)
+    roadmap = described_class.new(user)
+    expect([ arrays, pointers, window ]).to all(satisfy { |topic| roadmap.unlocked?(topic) })
+    expect(roadmap.state(window)).to eq("In Progress")
+  end
+
   it "never masters an empty topic or uses another member's progress" do
     empty = Topic.create!(name: "Empty", position: 6)
     record_result(arrays.problems.first, Attempt::ACCEPTED, owner: create_user(email: "other@example.com"))
