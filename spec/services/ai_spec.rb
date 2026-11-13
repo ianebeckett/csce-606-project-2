@@ -6,7 +6,7 @@ RSpec.describe Ai do
   after { use_ai_client(nil) }
 
   def expect_unconfigured
-    expect { Ai.client.complete(system: "s", prompt: "p") }.to raise_error(Ai::Error, /No AI provider/)
+    expect { Ai.client.complete(system: "s", prompt: "p") }.to raise_error(Ai::NotConfigured, /OPENAI_API_KEY is not set/)
   end
 
   it "returns the configured client" do
@@ -43,6 +43,32 @@ RSpec.describe Ai do
     it "returns nil when no key is set" do
       expect(Ai.client_from_env({})).to be_nil
       expect(Ai.client_from_env("OPENAI_API_KEY" => " ")).to be_nil
+    end
+  end
+
+  describe ".failure_reason" do
+    def wrapped(error)
+      raise error
+    rescue Ai::Error
+      begin
+        raise Coaching::Unavailable, "wrapped"
+      rescue Coaching::Unavailable => e
+        e
+      end
+    end
+
+    it "says the API key is missing when no AI provider is configured" do
+      error = wrapped(Ai::NotConfigured.new("OPENAI_API_KEY is not set"))
+      expect(Ai.failure_reason(error)).to eq("OpenAI API key is missing: set OPENAI_API_KEY on the server")
+    end
+
+    it "passes on the AI service's own explanation" do
+      error = wrapped(Ai::Error.new("OpenAI returned 503: The server is overloaded."))
+      expect(Ai.failure_reason(error)).to eq("OpenAI returned 503: The server is overloaded")
+    end
+
+    it "says the reply was unreadable when the AI answered with something else" do
+      expect(Ai.failure_reason(Coaching::InvalidResponse.new("missing message"))).to eq("the AI reply could not be read")
     end
   end
 end

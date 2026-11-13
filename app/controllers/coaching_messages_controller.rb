@@ -17,7 +17,8 @@ class CoachingMessagesController < ApplicationController
     Rails.logger.warn("Coaching failed for practice session #{@practice_session.id}: #{e.message}")
     @practice_session.skip_coaching!
     redirect_to problem_path(@problem),
-      alert: "#{@practice_session.coach_name} is unavailable right now. Your message is saved, and the editor is unlocked."
+      alert: "#{@practice_session.coach_name} is unavailable right now (#{Ai.failure_reason(e)}). " \
+             "Your message is saved, and the editor is unlocked."
   end
 
   private
