@@ -15,7 +15,7 @@ RSpec.describe "Coaching messages", type: :request do
     post problem_coaching_messages_path(problem), params: { conversation_message: { content: text } }
   end
 
-  describe "when the AI service fails" do
+  describe "when the AI service fails", :slow do
     # A real request with a key OpenAI rejects, so the failure is genuine.
     before do
       use_ai_client(Ai::OpenAiClient.new(api_key: "sk-invalid-key-for-testing"))
