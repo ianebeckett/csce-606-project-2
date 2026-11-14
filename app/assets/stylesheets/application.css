@@ -760,3 +760,18 @@ th { color: var(--muted); font-size: .75rem; }
     padding: 1rem;
   }
 }
+
+/* Submission page: live verdict */
+.live-result-hint { display: flex; align-items: center; gap: .6rem; color: var(--muted); }
+.thinking-dots { display: inline-flex; gap: .3rem; padding: .35rem 0; }
+.thinking-dots span { width: .45rem; height: .45rem; border-radius: 50%; background: var(--accent); animation: thinking 1.2s ease-in-out infinite; }
+.thinking-dots span:nth-child(2) { animation-delay: .15s; }
+.thinking-dots span:nth-child(3) { animation-delay: .3s; }
+.result-card.just-judged { animation: verdict-in .5s ease-out, verdict-glow 2s ease-out; }
+.result-card.result-accepted h2 { color: var(--success-text); }
+.result-card.result-accepted.just-judged { border-color: var(--success-text); animation: verdict-in .5s ease-out, accepted-glow 2.4s ease-out; }
+@keyframes thinking { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+@keyframes verdict-in { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes verdict-glow { 0% { box-shadow: 0 0 0 0 rgb(199 179 255 / .6); } 100% { box-shadow: 0 0 0 16px rgb(199 179 255 / 0); } }
+@keyframes accepted-glow { 0% { box-shadow: 0 0 0 0 rgb(156 233 191 / .75); } 100% { box-shadow: 0 0 0 18px rgb(156 233 191 / 0); } }
+@media (prefers-reduced-motion: reduce) { .thinking-dots span, .result-card.just-judged { animation: none; } }
