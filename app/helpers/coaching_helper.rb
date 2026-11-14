@@ -17,6 +17,9 @@ module CoachingHelper
     "approach" => "Stage 2 passed: your approach works. The editor is unlocked."
   }.freeze
 
+  # The stage that changes the editor from locked to unlocked once passed.
+  UNLOCKING_STAGE = "approach".freeze
+
   def coaching_step_hint(practice_session)
     STEP_HINTS.fetch(practice_session.coaching_state)
   end
@@ -34,5 +37,9 @@ module CoachingHelper
 
   def coaching_stage_passed_message(stage)
     STAGE_PASSED_MESSAGES[stage]
+  end
+
+  def editor_just_unlocked?
+    flash[:coaching_stage_passed] == UNLOCKING_STAGE
   end
 end

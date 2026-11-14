@@ -44,9 +44,20 @@ RSpec.describe "Coaching messages", type: :request do
 
       follow_redirect!
       expect(response.body).to include("Stage 1 passed", "stage done just-passed")
+      expect(response.body).not_to include("data-testid=\"editor-unlocked\"")
 
       get problem_path(problem)
       expect(response.body).not_to include("Stage 1 passed")
+    end
+
+    it "announces the editor unlock after the approach is accepted" do
+      coaching_session(premium).update!(coaching_state: "approach")
+      use_ai_client(Ai::FakeClient.new(reply: { message: "Correct.", advance: true }.to_json))
+
+      tell_coach("Use a hash set.")
+      follow_redirect!
+
+      expect(response.body).to include("Stage 2 passed", "data-testid=\"editor-unlocked\"", "editor-just-unlocked")
     end
 
     it "does not flag a stage when the final stage cannot advance" do

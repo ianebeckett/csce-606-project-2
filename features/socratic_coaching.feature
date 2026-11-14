@@ -34,7 +34,7 @@ Feature: US4 — Socratic Conceptual Auditing
     And I see my message in the conversation
     And the code editor is unlocked
 
-  Scenario: Passing each stage is celebrated
+  Scenario: Passing each stage is celebrated and the editor unlock is announced
     Given I am signed in as a "Premium" member
     And the coach accepts my explanations
     When I open the problem "Contains Duplicate"
@@ -45,6 +45,9 @@ Feature: US4 — Socratic Conceptual Auditing
     And stage "Explain your approach" is the current stage
     When I tell the coach "Walk through the array once, keeping a hash set of the numbers seen so far. If the current number is already in the set, return true. If the loop ends, return false."
     Then I see "Stage 2 passed: your approach works."
+    And I am notified that the editor is unlocked
+    When I open the problem "Contains Duplicate"
+    Then I am not notified that the editor is unlocked
 
   Scenario: A reply that does not pass a stage shows no stage effect
     Given I am signed in as a "Premium" member

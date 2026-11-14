@@ -42,3 +42,12 @@ Then("stage {string} is passed") do |label|
 end
 
 Then("I see no stage-passed message") { expect(page).not_to have_css("[data-testid='stage-passed']") }
+
+Then("I am notified that the editor is unlocked") do
+  expect(page).to have_css("[data-testid='editor-unlocked']", text: "The editor is unlocked.")
+  expect(page).to have_link("Go to editor", href: "#editor-title")
+end
+
+Then("I am not notified that the editor is unlocked") do
+  expect(page).not_to have_css("[data-testid='editor-unlocked']")
+end

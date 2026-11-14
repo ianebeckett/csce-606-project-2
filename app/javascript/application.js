@@ -91,8 +91,24 @@ window.addEventListener("pageshow", (event) => {
 })
 
 
+// Toasts close on their button and fade out on their own after a while.
+const setUpToasts = () => {
+  document.querySelectorAll("[data-toast]").forEach((toast) => {
+    const close = () => toast.remove()
+    toast.querySelector("[data-toast-close]")?.addEventListener("click", close)
+    setTimeout(() => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) close()
+      else toast.classList.add("toast-leaving")
+    }, 8000)
+    toast.addEventListener("animationend", (event) => {
+      if (event.animationName === "toast-out") close()
+    })
+  })
+}
+
 const setUpChatPage = () => {
   scrollChatToEnd()
+  setUpToasts()
 }
 
 if (document.readyState === "loading") {
