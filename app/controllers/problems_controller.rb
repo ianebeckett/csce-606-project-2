@@ -33,7 +33,8 @@ class ProblemsController < ApplicationController
     requested = params[:language].presence || latest&.language || Attempt::LANGUAGE
     @language = Attempt::LANGUAGES.include?(requested) ? requested : Attempt::LANGUAGE
     previous = attempts.where(language: @language).order(created_at: :desc, id: :desc).first
-    code = previous&.code.presence || @problem.starter_code_for(@language)
+    # fresh=1 comes from Start over: ignore earlier code and show the starter code.
+    code = (previous&.code.presence unless params[:fresh].present?) || @problem.starter_code_for(@language)
     @attempt = Attempt.new(code: code, language: @language)
     @coaching_session = current_user.practice_sessions.for_today(@problem) if current_user.premium?
   end

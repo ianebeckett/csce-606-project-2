@@ -17,6 +17,7 @@ Rails.application.routes.draw do
   resource :account, only: [ :show, :update ]
   resources :problems, only: [ :index, :show ] do
     resources :attempts, only: :create
+    resource :restart, only: :create, controller: "problem_restarts"
     resources :coaching_messages, only: :create
     resource :interview, only: :show
     resources :interview_messages, only: :create
