@@ -8,4 +8,10 @@ class AccountsController < ApplicationController
   rescue ActiveRecord::RecordInvalid, ActionController::ParameterMissing
     redirect_to account_path, alert: "That plan isn't available."
   end
+
+  def problem_access
+    unlocked = ActiveModel::Type::Boolean.new.cast(params[:unlocked]) || false
+    current_user.update!(all_problems_unlocked: unlocked)
+    redirect_to account_path, notice: unlocked ? "All problems are unlocked." : "Problems unlock by roadmap again."
+  end
 end

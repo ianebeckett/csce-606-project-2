@@ -55,4 +55,37 @@ RSpec.describe "My account", type: :request do
     expect(flash[:alert]).to eq("That plan isn't available.")
     expect(user.reload.role).to eq("Free")
   end
+
+  describe "problem access" do
+    before { sign_in(user) }
+
+    it "offers to unlock all problems" do
+      get account_path
+
+      expect(response.body).to include("Unlock all problems")
+    end
+
+    it "unlocks all problems" do
+      patch problem_access_account_path, params: { unlocked: true }
+
+      expect(response).to redirect_to(account_path)
+      expect(flash[:notice]).to eq("All problems are unlocked.")
+      expect(user.reload.all_problems_unlocked).to be(true)
+    end
+
+    it "locks problems by roadmap again" do
+      user.update!(all_problems_unlocked: true)
+
+      patch problem_access_account_path, params: { unlocked: false }
+
+      expect(flash[:notice]).to eq("Problems unlock by roadmap again.")
+      expect(user.reload.all_problems_unlocked).to be(false)
+    end
+
+    it "keeps problems locked when the request has no choice" do
+      patch problem_access_account_path
+
+      expect(user.reload.all_problems_unlocked).to be(false)
+    end
+  end
 end

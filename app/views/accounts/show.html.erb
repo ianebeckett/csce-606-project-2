@@ -17,3 +17,14 @@
     <%= button_to "Upgrade to Premium", account_path, method: :patch, params: { role: "Premium" }, class: "button" %>
   <% end %>
 </section>
+
+<section aria-labelledby="account-problem-access">
+  <h2 id="account-problem-access">Problem access</h2>
+  <% if current_user.all_problems_unlocked? %>
+    <p>All problems are unlocked, so you can open any topic without finishing its prerequisites.</p>
+    <%= button_to "Lock problems by roadmap", problem_access_account_path, method: :patch, params: { unlocked: false }, class: "button" %>
+  <% else %>
+    <p>Topics unlock as you master their prerequisites. For the user study, you can unlock every problem now.</p>
+    <%= button_to "Unlock all problems", problem_access_account_path, method: :patch, params: { unlocked: true }, class: "button" %>
+  <% end %>
+</section>
