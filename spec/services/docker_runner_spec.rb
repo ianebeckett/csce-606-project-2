@@ -52,7 +52,7 @@ RSpec.describe Judge::DockerRunner do
     end
   end
 
-  it "distinguishes submission exits from Docker startup failures" do
+  it "distinguishes submission exits from Docker startup failures", :docker do
     [ "exit(1)", "exit!(1)", "exit!(125)", "exit!(126)", "exit!(127)", "at_exit { exit 3 }; true" ].each do |expression|
       result = described_class.new.call(code: "def contains_duplicate(nums); #{expression}; end",
         language: "ruby", problem: problem, inputs: [ { "args" => [ [ 1 ] ] } ])
@@ -67,7 +67,7 @@ RSpec.describe Judge::DockerRunner do
     expect(result.fetch("status")).to eq("Judge Unavailable")
   end
 
-  it "combines parent and child executor coverage" do
+  it "combines parent and child executor coverage", :slow do
     payload = JSON.generate(
       code: "def contains_duplicate(nums); true; end",
       method_name: problem.method_name,
@@ -94,7 +94,7 @@ RSpec.describe Judge::DockerRunner do
     end
   end
 
-  it "enforces the non-root identity, memory limit, process limit, and network namespace" do
+  it "enforces the non-root identity, memory limit, process limit, and network namespace", :docker do
     code = <<~RUBY
       def contains_duplicate(nums)
         {
@@ -115,13 +115,13 @@ RSpec.describe Judge::DockerRunner do
     })
   end
 
-  it "terminates CPU-bound Ruby submissions at the wall-clock deadline" do
+  it "terminates CPU-bound Ruby submissions at the wall-clock deadline", :docker do
     cpu = described_class.new.call(code: "def contains_duplicate(nums); loop {}; end", language: "ruby",
       problem: problem, inputs: [ { "args" => [ [ 1 ] ] } ])
     expect(cpu.fetch("status")).to eq("Timeout")
   end
 
-  it "stops a container at its own wall-clock deadline" do
+  it "stops a container at its own wall-clock deadline", :slow do
     result = Judge::Command.new.call(
       [ "docker", "run", "--rm", "--pull=never", image, "0.2s", "ruby", "-e", "loop {}" ],
       timeout: 2
@@ -131,21 +131,21 @@ RSpec.describe Judge::DockerRunner do
     expect(result.exit_status).to eq(128 + Signal.list.fetch("KILL"))
   end
 
-  it "terminates memory-bound Ruby submissions" do
+  it "terminates memory-bound Ruby submissions", :docker do
     memory = described_class.new.call(
       code: 'def contains_duplicate(nums); values = []; loop { values << "x" * 8_388_608 }; end',
       language: "ruby", problem: problem, inputs: [ { "args" => [ [ 1 ] ] } ])
     expect(memory.fetch("status")).to eq("Runtime Error")
   end
 
-  it "refuses a write to the read-only judge filesystem" do
+  it "refuses a write to the read-only judge filesystem", :docker do
     result = described_class.new.call(
       code: 'def contains_duplicate(nums); File.write("/judge/probe", "x"); end', language: "ruby",
       problem: problem, inputs: [ { "args" => [ [ 1 ] ] } ])
     expect(result.fetch("status")).to eq("Runtime Error")
   end
 
-  it "reports malformed and cyclic linked-list results without hanging" do
+  it "reports malformed and cyclic linked-list results without hanging", :docker do
     linked = Problem.find_by!(slug: "reverse-linked-list")
     invalid = described_class.new.call(code: "def reverse_list(head); []; end", language: "ruby",
       problem: linked, inputs: [ { "args" => [ [ 1 ] ] } ])
@@ -155,7 +155,7 @@ RSpec.describe Judge::DockerRunner do
     expect(cyclic.fetch("status")).to eq("Runtime Error")
   end
 
-  it "executes the fixed Python, Go, and C++ versions" do
+  it "executes the fixed Python, Go, and C++ versions", :docker do
     inputs = problem.test_cases.order(:position).map(&:input)
 
     %w[python go cpp].each do |language|
@@ -169,7 +169,7 @@ RSpec.describe Judge::DockerRunner do
     end
   end
 
-  it "provides ListNode to Python, Go, and C++ submissions" do
+  it "provides ListNode to Python, Go, and C++ submissions", :docker do
     linked = Problem.find_by!(slug: "reverse-linked-list")
     inputs = linked.test_cases.order(:position).map(&:input)
 
@@ -184,7 +184,7 @@ RSpec.describe Judge::DockerRunner do
     end
   end
 
-  it "classifies runtime failures and timeouts in Python, Go, and C++" do
+  it "classifies runtime failures and timeouts in Python, Go, and C++", :docker do
     input = [ problem.test_cases.first.input ]
 
     %w[python go cpp].each do |language|

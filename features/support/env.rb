@@ -31,3 +31,10 @@ After do
   end
   Judge::Runner.define_singleton_method(:build, @original_judge_runner_build) if @original_judge_runner_build
 end
+
+# Seed the problems once per run. Scenarios run in transactions that are
+# rolled back, so the seed step only has to confirm the rows exist.
+BeforeAll { load Rails.root.join("db/seeds.rb") }
+AfterAll do
+  [ ReviewSchedule, ConversationMessage, Attempt, PracticeSession, TestCase, TopicPrerequisite, Problem, Topic ].each(&:delete_all)
+end

@@ -3,8 +3,13 @@ module JudgeHelpers
     User.create!(email: email, password: "correct-horse-battery", role: role)
   end
 
-  def seed_judge
+  # The suite seeds the problems once before it starts (see rails_helper.rb
+  # and features/support/env.rb), so this only reseeds if rows are missing.
+  def seed_judge(force: false)
+    return true if !force && defined?(JUDGE_PROBLEMS) && Problem.count >= JUDGE_PROBLEMS.size
+
     load Rails.root.join("db/seeds.rb")
+    true
   end
 
   def sign_in(user)
