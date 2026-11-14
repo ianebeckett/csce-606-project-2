@@ -33,3 +33,27 @@ Feature: US4 — Socratic Conceptual Auditing
     Then I am told the coach is unavailable
     And I see my message in the conversation
     And the code editor is unlocked
+
+  Scenario: Passing each stage is celebrated and the editor unlock is announced
+    Given I am signed in as a "Premium" member
+    And the coach accepts my explanations
+    When I open the problem "Contains Duplicate"
+    Then I see "Step 1 of 3"
+    And no stage was just passed
+    When I tell the coach "Given an array of integers, return true if any value appears at least twice, and false if every value is distinct."
+    Then I see "Step 2 of 3"
+    And the step hint shines
+    When I tell the coach "Walk through the array once, keeping a hash set of the numbers seen so far. If the current number is already in the set, return true. If the loop ends, return false."
+    Then I see "Step 3 of 3"
+    And the step hint shines
+    And I am notified that the editor is unlocked
+    When I open the problem "Contains Duplicate"
+    Then I am not notified that the editor is unlocked
+
+  Scenario: A reply that does not pass a stage shows no stage effect
+    Given I am signed in as a "Premium" member
+    And the coach asks for clarification
+    When I open the problem "Contains Duplicate"
+    And I tell the coach "It is about numbers."
+    Then I see "Step 1 of 3"
+    And no stage was just passed

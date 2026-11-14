@@ -1,8 +1,9 @@
 <section class="coach-panel" aria-labelledby="coach-title">
   <div class="panel-title"><h2 id="coach-title"><%= practice_session.coach_name %></h2></div>
   <div class="coach-body">
-    <p class="coach-step"><%= coaching_step_hint(practice_session) %></p>
-    <ol class="conversation">
+    <%# The new stage's hint shines gold once, right after the coach passes a stage. %>
+    <%= tag.p coaching_step_hint(practice_session), class: [ "coach-step", ("stage-shine" if coaching_stage_just_passed?) ], role: "status" %>
+    <ol class="conversation" tabindex="0" aria-label="Conversation with <%= practice_session.coach_name %>" data-chat-log>
       <% practice_session.conversation_messages.coaching.chronological.each do |message| %>
         <li class="conversation-message <%= message.role %>">
           <strong><%= message.role == "user" ? "You" : practice_session.coach_name %></strong>
@@ -10,7 +11,8 @@
         </li>
       <% end %>
     </ol>
-    <%= form_with model: ConversationMessage.new, url: problem_coaching_messages_path(problem), local: true do |form| %>
+    <%= form_with model: ConversationMessage.new, url: problem_coaching_messages_path(problem), local: true,
+      data: { chat_form: "", chat_thinking: "#{practice_session.coach_name} is thinking" } do |form| %>
       <%= form.label :content, "Your message" %>
       <%= form.text_area :content, rows: 4, required: true, data: { submit_on_ctrl_enter: "" } %>
       <%= form.submit "Send (Ctrl + Enter)", class: "button" %>
