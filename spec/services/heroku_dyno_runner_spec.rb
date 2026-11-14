@@ -22,6 +22,18 @@ RSpec.describe Judge::HerokuDynoRunner do
   let(:api) { instance_double(Judge::HerokuDynoRunner::Api) }
   let(:rendezvous) { instance_double(Judge::HerokuDynoRunner::Rendezvous) }
 
+  it "uses a prepared single-use session and closes it when execution fails" do
+    pool = instance_double(Judge::HerokuPool)
+    session = double("prepared session")
+    expect(api).not_to receive(:create_dyno)
+    expect(pool).to receive(:checkout).and_return(session)
+    expect(session).to receive(:call).with(input: kind_of(String), timeout: 55).and_raise(IOError)
+    expect(session).to receive(:close)
+    runner = described_class.new(app: "codecoach", token: "secret", api: api, pool: pool)
+    expect(runner.call(code: "solution", language: "ruby", problem: problem, inputs: inputs))
+      .to eq("status" => "Judge Unavailable", "outputs" => [])
+  end
+
   it "requests the judge process type with scrubbed config values" do
     response = Struct.new(:code, :body)
     api_class = Class.new(described_class::Api) do

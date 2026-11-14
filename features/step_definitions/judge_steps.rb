@@ -29,21 +29,21 @@ end
 
 Then("I am told when to retry without losing my code") do
   expect(page.status_code).to eq(503)
-  expect(page.response_headers.fetch("Retry-After")).to eq("65")
+  expect(page.response_headers.fetch("Retry-After")).to eq("61")
   expect(page).to have_content("The judge is at capacity (10 pending submissions)")
-  expect(page).to have_content("try again in about 65 seconds")
+  expect(page).to have_content("try again in about 61 seconds")
   expect(page).to have_content("not queued")
   expect(page.find_field("Ruby source code").value.gsub(/\r\n?/, "\n")).to eq(@submitted_code)
   expect(Attempt.count).to eq(@pending_count)
   expect(enqueued_jobs).to be_empty
 end
 
-Then("I see a Pending result with 9 submissions ahead and an estimated wait of 545 seconds") do
+Then("I see a Pending result with 9 submissions ahead and an estimated wait of 541 seconds") do
   expect(@attempt.reload.judge_result).to eq(Attempt::PENDING)
   expect(Attempt.where(judge_result: Attempt::PENDING).count).to eq(10)
   expect(page).to have_content(Attempt::PENDING)
   expect(page).to have_content("9 submissions ahead")
-  expect(page).to have_content("about 545 seconds")
+  expect(page).to have_content("about 541 seconds")
   expect(page).to have_content("estimate")
   expect(page).to have_link("Refresh result", href: attempt_path(@attempt))
 end
@@ -202,7 +202,7 @@ Given("Heroku can create an isolated one-off judge dyno") do
   chunks = [ JSON.generate(status: "ok", outputs: outputs, runtime: "Go 1.27.3") ]
   socket = Object.new
   socket.define_singleton_method(:write) { |value| value.bytesize }
-  socket.define_singleton_method(:gets) { "connected\n" }
+  socket.define_singleton_method(:gets) { |*_arguments| "connected\n" }
   socket.define_singleton_method(:readpartial) { |_size| chunks.empty? ? raise(EOFError) : chunks.shift }
   socket.define_singleton_method(:close) { }
   runner = Judge::HerokuDynoRunner.new(

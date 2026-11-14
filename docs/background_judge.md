@@ -24,7 +24,8 @@ QUEUE=judge bin/rails jobs:work
 
 Puma and the worker must use the same persistent PostgreSQL database and
 application version. For the single-app Heroku deployment, the queue dyno calls
-the Platform API and each submission runs in a fresh `judge` one-off dyno; it
+the Platform API to keep two fresh, unused `judge` one-off dynos ready. Each
+submission consumes one dyno and starts a replacement; it
 does not share a Docker daemon with the web process. See `docs/heroku.md` for
 the required process images, config vars, scaling, and verification commands.
 
@@ -35,7 +36,13 @@ version.
 `JUDGE_IMAGE` selects the image for both `bin/judge-build` and the worker;
 its default is `codecoach-judge:local`.
 Run the worker under a process supervisor so it restarts after failure.
-These are operating requirements; production deployment is unverified.
+The Heroku queue image instead starts `bundle exec ruby bin/judge-worker`,
+which owns the ready pool and closes its attachments on graceful shutdown.
+`JUDGE_READY_POOL_SIZE` defaults to 2 on that worker; 0 disables prewarming.
+Keep exactly one queue worker so the pool is not duplicated. A ready dyno is
+used once, never shared across submissions. Startup, replenishment, and bursts
+can still require waiting; the pool is not a latency guarantee.
+These are operating requirements for hosts using local Docker.
 
 `JUDGE_QUEUE_LIMIT` is a positive integer, defaulting to 10. Configure it
 consistently in every web process. It limits all `Pending` Attempts across
@@ -104,13 +111,14 @@ The source remains in that browser's form and is not saved in history.
 
 The estimate assumes one healthy worker. Each earlier submission contributes
 the one-minute job deadline. Elapsed time since `judging_started_at` is
-subtracted, with a five-second minimum remaining estimate. One five-second
-worker poll interval is added. Rejection uses the first running or waiting
+subtracted, with a one-second minimum remaining estimate. A one-second
+worker poll interval is added. The worker checks for new jobs every second.
+Rejection uses the first running or waiting
 submission's remaining estimate because its completion can free one slot.
 
-For example, one unstarted job suggests 65 seconds. If it started ten seconds
-ago, the suggestion becomes 55 seconds. A submission behind that running job
-and one unstarted job shows 115 seconds; nine unstarted jobs ahead show 545
+For example, one unstarted job suggests 61 seconds. If it started ten seconds
+ago, the suggestion becomes 51 seconds. A submission behind that running job
+and one unstarted job shows 111 seconds; nine unstarted jobs ahead show 541
 seconds. These are conservative estimates, not completion-time guarantees.
 Worker downtime or delays can extend the wait. Refresh reads current state;
 no automatic submission or JavaScript is needed.

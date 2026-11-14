@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+STDOUT.sync = true
+STDERR.sync = true
+require_relative "../config/environment"
+
+# Preload constants before the pool opens connections in background threads.
+Rails.application.eager_load!
+Judge::Worker.run
