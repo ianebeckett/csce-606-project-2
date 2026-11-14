@@ -1,37 +1,77 @@
 <% content_for :title, "#{@attempt.problem.title} history · Code Coach" %>
-<p><%= link_to "Back to learning history", history_index_path %></p>
-<h1><%= @attempt.problem.title %></h1>
-<p>Topic: <%= @attempt.problem.topic.name %></p>
-<p>Submitted: <%= @attempt.created_at.strftime(ApplicationHelper::SUBMISSION_TIME_FORMAT) %></p>
-<p>Language: <%= Attempt.language_version(@attempt.language) %></p>
 
-<section aria-labelledby="attempt-result">
-  <h2 id="attempt-result">Judge result</h2>
-  <p><%= @attempt.judge_result %></p>
-  <p><%= @attempt.passed_cases %> / <%= @attempt.total_cases %> test cases passed</p>
+<%= link_to "← Back to learning history", history_index_path, class: "back-link" %>
+
+<header class="history-detail-heading">
+  <div>
+    <p class="eyebrow">ATTEMPT DETAILS</p>
+    <h1><%= @attempt.problem.title %></h1>
+    <p class="muted">
+      <%= @attempt.problem.topic.name %>
+      <span aria-hidden="true">·</span>
+      <%= Attempt.language_version(@attempt.language) %>
+    </p>
+  </div>
+  <span class="badge <%= @attempt.judge_result == Attempt::ACCEPTED ? "easy" : "history-result" %>">
+    <%= @attempt.judge_result %>
+  </span>
+</header>
+
+<section class="history-result-card" aria-labelledby="attempt-result">
+  <div class="history-result-overview">
+    <div>
+      <p class="eyebrow">JUDGE RESULT</p>
+      <h2 id="attempt-result"><%= @attempt.judge_result %></h2>
+    </div>
+    <p class="history-case-count">
+      <strong><%= @attempt.passed_cases %></strong>
+      <span> / <%= @attempt.total_cases %> test cases passed</span>
+    </p>
+  </div>
+  <div class="history-detail-meta">
+    <div class="history-meta-item">
+      <span>Submitted</span>
+      <time datetime="<%= @attempt.created_at.iso8601 %>">
+        <%= @attempt.created_at.strftime(ApplicationHelper::SUBMISSION_TIME_FORMAT) %>
+      </time>
+    </div>
+    <div class="history-meta-item">
+      <span>Language</span>
+      <strong><%= Attempt.language_version(@attempt.language) %></strong>
+    </div>
+  </div>
   <% if @attempt.error_message.present? %>
-    <pre><%= @attempt.error_message %></pre>
+    <div class="history-error">
+      <h3>Execution details</h3>
+      <pre><%= @attempt.error_message %></pre>
+    </div>
   <% end %>
 </section>
 
-<section aria-labelledby="submitted-code">
-  <h2 id="submitted-code">Submitted code</h2>
-  <pre><code><%= @attempt.code %></code></pre>
-  <% if @attempt.code_review_message %>
-    <p><%= link_to "View AI code review", attempt_code_review_path(@attempt) %></p>
-  <% end %>
+<section class="problem-panel history-detail-panel" aria-labelledby="submitted-code">
+  <div class="panel-title">
+    <h2 id="submitted-code">Submitted code</h2>
+    <% if @attempt.code_review_message %>
+      <%= link_to "View AI code review →", attempt_code_review_path(@attempt), class: "practice-link" %>
+    <% end %>
+  </div>
+  <div class="history-code">
+    <pre><code><%= @attempt.code %></code></pre>
+  </div>
 </section>
 
-<section aria-labelledby="conversation">
-  <h2 id="conversation">AI dialogue</h2>
+<section class="problem-panel history-detail-panel" aria-labelledby="conversation">
+  <div class="panel-title">
+    <h2 id="conversation">AI dialogue</h2>
+  </div>
   <% messages = @attempt.practice_session.conversation_messages.coaching.chronological %>
   <% if messages.empty? %>
-    <p>No dialogue for this practice session.</p>
+    <p class="empty-state">No dialogue for this practice session.</p>
   <% else %>
-    <ol>
+    <ol class="conversation history-conversation">
       <% messages.each do |message| %>
-        <li>
-          <p><strong><%= message.role.capitalize %></strong></p>
+        <li class="conversation-message <%= message.role %>">
+          <strong class="history-speaker"><%= message.role.capitalize %></strong>
           <p><%= message.content %></p>
         </li>
       <% end %>
