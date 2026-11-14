@@ -2,7 +2,7 @@
   <div class="panel-title"><h2 id="coach-title"><%= practice_session.coach_name %></h2></div>
   <div class="coach-body">
     <p class="coach-step"><%= coaching_step_hint(practice_session) %></p>
-    <ol class="conversation">
+    <ol class="conversation" tabindex="0" aria-label="Conversation with <%= practice_session.coach_name %>" data-chat-log>
       <% practice_session.conversation_messages.coaching.chronological.each do |message| %>
         <li class="conversation-message <%= message.role %>">
           <strong><%= message.role == "user" ? "You" : practice_session.coach_name %></strong>

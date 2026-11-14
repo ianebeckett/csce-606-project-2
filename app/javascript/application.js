@@ -36,3 +36,21 @@ const openPracticeRatingModal = () => {
 
 document.addEventListener("turbo:load", openPracticeRatingModal)
 document.addEventListener("DOMContentLoaded", openPracticeRatingModal)
+
+
+// AI chat: keep the newest message in view.
+const scrollChatToEnd = () => {
+  document.querySelectorAll("[data-chat-log]").forEach((log) => {
+    log.scrollTop = log.scrollHeight
+  })
+}
+
+const setUpChatPage = () => {
+  scrollChatToEnd()
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", setUpChatPage)
+} else {
+  setUpChatPage()
+}

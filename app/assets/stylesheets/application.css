@@ -760,3 +760,13 @@ th { color: var(--muted); font-size: .75rem; }
     padding: 1rem;
   }
 }
+
+/* AI chat: scrollable log */
+.conversation { max-height: min(28rem, 55vh); overflow-y: auto; overscroll-behavior: contain; padding-right: .25rem; }
+.conversation:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
+.conversation-message:last-child { animation: message-in .3s ease-out; }
+
+@keyframes message-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .conversation-message:last-child { animation: none; }
+}

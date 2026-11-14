@@ -33,6 +33,16 @@ RSpec.describe "Coaching messages", type: :request do
     end
   end
 
+  describe "chat page" do
+    before { sign_in(premium) }
+
+    it "marks the chat log as scrollable" do
+      get problem_path(problem)
+
+      expect(response.body).to include("data-chat-log")
+    end
+  end
+
   describe "who can talk to the coach" do
     it "sends a logged-out visitor to sign in and saves nothing" do
       tell_coach("hello")
