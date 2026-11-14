@@ -1,5 +1,5 @@
     <h2>Examples</h2>
     <% problem.test_cases.select(&:visible).each_with_index do |test_case, index| %>
-      <div class="example"><h3>Example <%= index + 1 %></h3><pre>Arguments: <%= JSON.generate(test_case.input.fetch("args")) %>
-Returns:   <%= JSON.generate(test_case.expected_output) %></pre></div>
+      <div class="example"><h3>Example <%= index + 1 %></h3><pre>Input: <%= example_input(problem, test_case) %>
+Output: <%= JSON.generate(test_case.expected_output) %></pre></div>
     <% end %>

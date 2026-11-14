@@ -59,3 +59,9 @@ Feature: US1 — Roadmap & Problem Discovery
     When I select the "Dynamic Programming" topic
     Then I see "No problems are available in this topic yet."
     And the roadmap shows "Dynamic Programming" as "In Progress"
+
+  Scenario: Examples show each input by name
+    Given I am signed in as a "Free" member
+    When I open the problem "Contains Duplicate"
+    Then I see "Input: nums = [1,2,3,1]"
+    And I see "Output: true"
