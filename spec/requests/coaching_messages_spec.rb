@@ -33,6 +33,41 @@ RSpec.describe "Coaching messages", type: :request do
     end
   end
 
+  describe "stage progress" do
+    before { sign_in(premium) }
+
+    it "remembers the stage just passed for the next page only" do
+      use_ai_client(Ai::FakeClient.new(reply: { message: "Right.", advance: true }.to_json))
+
+      tell_coach("Return true if any number repeats.")
+      expect(flash[:coaching_stage_passed]).to eq("problem")
+
+      follow_redirect!
+      expect(response.body).to include("Stage 1 passed", "stage done just-passed")
+
+      get problem_path(problem)
+      expect(response.body).not_to include("Stage 1 passed")
+    end
+
+    it "does not flag a stage when the final stage cannot advance" do
+      coaching_session(premium).update!(coaching_state: "complexity")
+      use_ai_client(Ai::FakeClient.new(reply: { message: "O(n).", advance: true }.to_json))
+
+      tell_coach("It is O(n) time.")
+
+      expect(flash[:coaching_stage_passed]).to be_nil
+    end
+
+    it "keeps the stage-passed key out of the page banners" do
+      use_ai_client(Ai::FakeClient.new(reply: { message: "Right.", advance: true }.to_json))
+
+      tell_coach("Return true if any number repeats.")
+      follow_redirect!
+
+      expect(response.body).not_to include("notice coaching_stage_passed")
+    end
+  end
+
   describe "chat page" do
     before { sign_in(premium) }
 

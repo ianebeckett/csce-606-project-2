@@ -32,3 +32,13 @@ Then("I see my message in the conversation") do
 end
 
 Then("I am told the coach is unavailable") { expect(page).to have_content("unavailable") }
+
+Then("stage {string} is the current stage") do |label|
+  expect(page).to have_css(".stage-tracker li.current[aria-current='step']", text: label)
+end
+
+Then("stage {string} is passed") do |label|
+  expect(page).to have_css(".stage-tracker li.done", text: "#{label} (passed)")
+end
+
+Then("I see no stage-passed message") { expect(page).not_to have_css("[data-testid='stage-passed']") }

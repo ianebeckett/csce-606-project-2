@@ -33,3 +33,23 @@ Feature: US4 — Socratic Conceptual Auditing
     Then I am told the coach is unavailable
     And I see my message in the conversation
     And the code editor is unlocked
+
+  Scenario: Passing each stage is celebrated
+    Given I am signed in as a "Premium" member
+    And the coach accepts my explanations
+    When I open the problem "Contains Duplicate"
+    Then stage "Restate the problem" is the current stage
+    When I tell the coach "Given an array of integers, return true if any value appears at least twice, and false if every value is distinct."
+    Then I see "Stage 1 passed: you understand the problem."
+    And stage "Restate the problem" is passed
+    And stage "Explain your approach" is the current stage
+    When I tell the coach "Walk through the array once, keeping a hash set of the numbers seen so far. If the current number is already in the set, return true. If the loop ends, return false."
+    Then I see "Stage 2 passed: your approach works."
+
+  Scenario: A reply that does not pass a stage shows no stage effect
+    Given I am signed in as a "Premium" member
+    And the coach asks for clarification
+    When I open the problem "Contains Duplicate"
+    And I tell the coach "It is about numbers."
+    Then I see no stage-passed message
+    And stage "Restate the problem" is the current stage
