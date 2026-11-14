@@ -197,7 +197,7 @@ RSpec.describe "AI code review requests", type: :request do
       post attempt_code_review_path(attempt)
 
       expect(response).to redirect_to(attempt_path(attempt))
-      expect(flash[:alert]).to include("AI code review is unavailable right now")
+      expect(flash[:alert]).to include("AI code review is unavailable right now", "OpenAI API key is missing")
     end
 
     it "offers the review button on the attempt page" do

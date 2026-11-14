@@ -33,3 +33,10 @@ Feature: US4 — Socratic Conceptual Auditing
     Then I am told the coach is unavailable
     And I see my message in the conversation
     And the code editor is unlocked
+
+  Scenario: The coach explains when the OpenAI API key is missing
+    Given I am signed in as a "Premium" member
+    When I open the problem "Contains Duplicate"
+    And I tell the coach "Return true if any number appears twice in the array."
+    Then I see "Senior SWE is unavailable right now (OpenAI API key is missing: set OPENAI_API_KEY on the server)."
+    And the code editor is unlocked

@@ -33,6 +33,16 @@ RSpec.describe "Coaching messages", type: :request do
     end
   end
 
+  describe "when no OpenAI API key is configured" do
+    before { sign_in(premium) }
+
+    it "says the API key is missing" do
+      tell_coach("Return true if any number appears twice.")
+
+      expect(flash[:alert]).to include("Senior SWE is unavailable right now", "OPENAI_API_KEY")
+    end
+  end
+
   describe "who can talk to the coach" do
     it "sends a logged-out visitor to sign in and saves nothing" do
       tell_coach("hello")
