@@ -1,21 +1,24 @@
 <% content_for :title, "#{@attempt.judge_result} · Code Coach" %>
 <%= link_to "← My submissions", attempts_path, class: "back-link" %>
 <p class="eyebrow">SUBMISSION #<%= @attempt.id %></p><h1><%= @attempt.problem.title %></h1>
-<div class="result-card" role="status">
+<% pending = @attempt.judge_result == Attempt::PENDING %>
+<%= tag.div class: [ "result-card", "result-#{@attempt.judge_result.parameterize}" ], role: "status",
+  data: { attempt_id: @attempt.id, attempt_status_url: (attempt_path(@attempt, format: :json) if pending) } do %>
   <h2><%= @attempt.judge_result %></h2>
-  <% if @attempt.judge_result == Attempt::PENDING %>
+  <% if pending %>
     <% if @attempt.judging_started_at %>
       <p>Judging has started.</p>
     <% else %>
       <p><%= @queue_wait.fetch(:count) %> submissions ahead. Estimated wait before judging starts: about <%= @queue_wait.fetch(:seconds) %> seconds.</p>
     <% end %>
     <p>This is an estimate while the judge is running. Delays, restarts, or retries can take longer.</p>
+    <p class="live-result-hint" hidden data-live-result-hint><span class="thinking-dots" aria-hidden="true"><span></span><span></span><span></span></span> This page updates on its own when the result is ready.</p>
     <p><%= link_to "Refresh result", attempt_path(@attempt) %></p>
   <% end %>
   <p class="case-count"><%= @attempt.passed_cases %> / <%= @attempt.total_cases %> test cases passed</p>
   <p class="muted">Language: <%= Attempt.language_version(@attempt.language) %> · <%= @attempt.created_at.strftime(ApplicationHelper::SUBMISSION_TIME_FORMAT) %></p>
   <% if @attempt.error_message.present? %><pre class="error-detail"><%= @attempt.error_message %></pre><% end %>
-</div>
+<% end %>
 <h2>Submitted <%= Attempt.language_name(@attempt.language) %> code</h2><pre class="saved-code"><code><%= @attempt.code %></code></pre>
 <% unless current_user.premium? %><p class="muted">AI code review is available to Premium members. <%= link_to "Upgrade my account", account_path %></p><% end %>
 <div class="attempt-actions">
