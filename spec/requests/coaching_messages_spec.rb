@@ -36,10 +36,10 @@ RSpec.describe "Coaching messages", type: :request do
   describe "chat page" do
     before { sign_in(premium) }
 
-    it "marks the chat log as scrollable" do
+    it "marks the chat log as scrollable and the form as a chat form" do
       get problem_path(problem)
 
-      expect(response.body).to include("data-chat-log")
+      expect(response.body).to include("data-chat-log", "data-chat-form", "Senior SWE is thinking")
     end
   end
 
