@@ -43,11 +43,11 @@ RSpec.describe "Coaching messages", type: :request do
       expect(flash[:coaching_stage_passed]).to eq("problem")
 
       follow_redirect!
-      expect(response.body).to include("Stage 1 passed", "stage done just-passed")
+      expect(response.body).to include("coach-step stage-shine", ">Step 2 of 3")
       expect(response.body).not_to include("data-testid=\"editor-unlocked\"")
 
       get problem_path(problem)
-      expect(response.body).not_to include("Stage 1 passed")
+      expect(response.body).not_to include("stage-shine")
     end
 
     it "announces the editor unlock after the approach is accepted" do
@@ -57,7 +57,7 @@ RSpec.describe "Coaching messages", type: :request do
       tell_coach("Use a hash set.")
       follow_redirect!
 
-      expect(response.body).to include("Stage 2 passed", "data-testid=\"editor-unlocked\"", "editor-just-unlocked")
+      expect(response.body).to include("coach-step stage-shine", "data-testid=\"editor-unlocked\"", "editor-just-unlocked")
     end
 
     it "does not flag a stage when the final stage cannot advance" do

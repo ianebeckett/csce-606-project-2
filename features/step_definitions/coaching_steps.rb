@@ -33,15 +33,9 @@ end
 
 Then("I am told the coach is unavailable") { expect(page).to have_content("unavailable") }
 
-Then("stage {string} is the current stage") do |label|
-  expect(page).to have_css(".stage-tracker li.current[aria-current='step']", text: label)
-end
+Then("the step hint shines") { expect(page).to have_css(".coach-step.stage-shine") }
 
-Then("stage {string} is passed") do |label|
-  expect(page).to have_css(".stage-tracker li.done", text: "#{label} (passed)")
-end
-
-Then("I see no stage-passed message") { expect(page).not_to have_css("[data-testid='stage-passed']") }
+Then("no stage was just passed") { expect(page).not_to have_css(".coach-step.stage-shine") }
 
 Then("I am notified that the editor is unlocked") do
   expect(page).to have_css("[data-testid='editor-unlocked']", text: "The editor is unlocked.")

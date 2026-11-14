@@ -1,22 +1,8 @@
-<% passed_stage = flash[:coaching_stage_passed] %>
 <section class="coach-panel" aria-labelledby="coach-title">
   <div class="panel-title"><h2 id="coach-title"><%= practice_session.coach_name %></h2></div>
   <div class="coach-body">
-    <% unless practice_session.coaching_state == PracticeSession::COACHING_SKIPPED %>
-      <ol class="stage-tracker" aria-label="Coaching progress">
-        <% CoachingHelper::STAGE_LABELS.each_with_index do |(stage, label), index| %>
-          <% status = coaching_stage_status(practice_session, stage) %>
-          <%= tag.li class: [ "stage", status, ("just-passed" if stage == passed_stage) ], aria: { current: status == "current" ? "step" : nil } do %>
-            <span class="stage-marker" aria-hidden="true"><%= status == "done" ? "✓" : index + 1 %></span>
-            <span><%= label %><span class="sr-only"> (<%= status == "done" ? "passed" : status %>)</span></span>
-          <% end %>
-        <% end %>
-      </ol>
-    <% end %>
-    <% if (passed_message = coaching_stage_passed_message(passed_stage)) %>
-      <p class="stage-passed" role="status" data-testid="stage-passed"><%= passed_message %></p>
-    <% end %>
-    <p class="coach-step"><%= coaching_step_hint(practice_session) %></p>
+    <%# The new stage's hint shines gold once, right after the coach passes a stage. %>
+    <%= tag.p coaching_step_hint(practice_session), class: [ "coach-step", ("stage-shine" if coaching_stage_just_passed?) ], role: "status" %>
     <ol class="conversation" tabindex="0" aria-label="Conversation with <%= practice_session.coach_name %>" data-chat-log>
       <% practice_session.conversation_messages.coaching.chronological.each do |message| %>
         <li class="conversation-message <%= message.role %>">

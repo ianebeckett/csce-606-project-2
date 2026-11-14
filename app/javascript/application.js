@@ -76,6 +76,9 @@ document.addEventListener("submit", (event) => {
 
   // Wait a tick so the browser has already built the form data.
   setTimeout(() => {
+    // The message now shows in the chat, so empty the box. The browser has
+    // already captured its text for the request.
+    if (field) field.value = ""
     field?.setAttribute("readonly", "")
     if (button) {
       button.disabled = true

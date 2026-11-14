@@ -38,13 +38,14 @@ Feature: US4 — Socratic Conceptual Auditing
     Given I am signed in as a "Premium" member
     And the coach accepts my explanations
     When I open the problem "Contains Duplicate"
-    Then stage "Restate the problem" is the current stage
+    Then I see "Step 1 of 3"
+    And no stage was just passed
     When I tell the coach "Given an array of integers, return true if any value appears at least twice, and false if every value is distinct."
-    Then I see "Stage 1 passed: you understand the problem."
-    And stage "Restate the problem" is passed
-    And stage "Explain your approach" is the current stage
+    Then I see "Step 2 of 3"
+    And the step hint shines
     When I tell the coach "Walk through the array once, keeping a hash set of the numbers seen so far. If the current number is already in the set, return true. If the loop ends, return false."
-    Then I see "Stage 2 passed: your approach works."
+    Then I see "Step 3 of 3"
+    And the step hint shines
     And I am notified that the editor is unlocked
     When I open the problem "Contains Duplicate"
     Then I am not notified that the editor is unlocked
@@ -54,5 +55,5 @@ Feature: US4 — Socratic Conceptual Auditing
     And the coach asks for clarification
     When I open the problem "Contains Duplicate"
     And I tell the coach "It is about numbers."
-    Then I see no stage-passed message
-    And stage "Restate the problem" is the current stage
+    Then I see "Step 1 of 3"
+    And no stage was just passed
