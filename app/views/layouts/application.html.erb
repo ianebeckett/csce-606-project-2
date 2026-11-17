@@ -38,7 +38,7 @@
       </nav>
     </header>
     <main id="main-content" class="page-shell" tabindex="-1">
-      <% flash.each do |type, message| %><div class="notice <%= type %>" role="status"><%= message %></div><% end %>
+      <% flash.to_hash.slice("notice", "alert").each do |type, message| %><div class="notice <%= type %>" role="status"><%= message %></div><% end %>
       <%= yield %>
     </main>
     <footer class="site-footer">Code Coach</footer>

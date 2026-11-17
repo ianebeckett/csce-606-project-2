@@ -23,7 +23,17 @@
     <p class="locked-note">The editor unlocks once <%= @coaching_session.coach_name %> agrees with your approach.</p>
   </section>
   <% else %>
+  <div class="<%= "editor-just-unlocked" if editor_just_unlocked? %>">
   <%= render "problems/editor", problem: @problem, attempt: @attempt, language: @language %>
+  </div>
   <% end %>
   </div>
 </div>
+<% if editor_just_unlocked? %>
+<div class="toast" role="status" data-toast data-testid="editor-unlocked">
+  <strong>The editor is unlocked.</strong>
+  <span>Start coding your solution.</span>
+  <a href="#editor-title">Go to editor</a>
+  <button type="button" class="toast-close" aria-label="Dismiss" data-toast-close>×</button>
+</div>
+<% end %>
