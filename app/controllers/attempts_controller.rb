@@ -10,6 +10,9 @@ class AttemptsController < ApplicationController
 
   def show
     @attempt = current_user.attempts.includes(practice_session: :problem).find(params[:id])
+    # Polled by the submission page while judging, so it can update itself.
+    return render(json: { judge_result: @attempt.judge_result, pending: @attempt.judge_result == Attempt::PENDING }) if request.format.json?
+
     if @attempt.judge_result == Attempt::PENDING && !@attempt.judging_started_at
       @queue_wait = Judge::Queue.new.wait_for(@attempt)
     end
