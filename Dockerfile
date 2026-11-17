@@ -78,7 +78,7 @@ CMD ["./bin/rails", "db:migrate", "db:seed"]
 
 FROM app AS heroku-queue
 ENV QUEUE="judge"
-CMD ["bundle", "exec", "rake", "jobs:work"]
+CMD ["bundle", "exec", "ruby", "bin/judge-worker"]
 
 FROM app AS heroku-web
 CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]

@@ -14,7 +14,7 @@ RUN test "$(python3 --version)" = "Python 3.15.2" \
     && test "$(ruby -e 'print RUBY_VERSION')" = "4.0.1"
 
 WORKDIR /judge
-COPY main.rb runner.rb ./
+COPY main.rb runner.rb ready.rb warmup.go ./
 USER 65534:65534
 ENTRYPOINT ["timeout", "--signal=KILL"]
 CMD ["55s", "ruby", "-rcoverage", "-e", "Coverage.start(lines: true) if ENV['JUDGE_COVERAGE'] == '1'; load '/judge/main.rb'"]

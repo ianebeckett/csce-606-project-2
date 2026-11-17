@@ -20,7 +20,7 @@ RSpec.describe Judge::Queue do
     attempt = session.attempts.build(code: "retry source")
 
     expect { described_class.new.submit(attempt) }.to raise_error(Judge::Queue::Full) { |error|
-      expect(error.retry_after).to eq(10)
+      expect(error.retry_after).to eq(2)
     }
     expect(attempt).to be_new_record
   end

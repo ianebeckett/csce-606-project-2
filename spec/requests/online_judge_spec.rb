@@ -24,7 +24,7 @@ RSpec.describe "Online Judge requests", type: :request do
 
     expect(enqueued_jobs).to be_empty
     expect(response).to have_http_status(:service_unavailable)
-    expect(response.headers.fetch("Retry-After")).to eq("55")
+    expect(response.headers.fetch("Retry-After")).to eq("51")
     expect(response.body).to include("The judge is at capacity (2 pending submissions)", "not queued", "estimate")
     expect(response.body).to include(ERB::Util.html_escape(code))
     expect(response.body).not_to include("private source", "other pending source")
@@ -47,7 +47,7 @@ RSpec.describe "Online Judge requests", type: :request do
       session.attempts.create!(code: "later source", total_cases: 6)
 
       get attempt_path(attempt)
-      expect(response.body).to include("2 submissions ahead", "about 115 seconds", "estimate")
+      expect(response.body).to include("2 submissions ahead", "about 111 seconds", "estimate")
       expect(response.body).not_to include("private older source", "queued source", "later source")
 
       first.update!(judge_result: "Accepted")
