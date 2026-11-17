@@ -760,3 +760,8 @@ th { color: var(--muted); font-size: .75rem; }
     padding: 1rem;
   }
 }
+
+.start-over { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
+.start-over p { margin: .6rem 0 0; }
+.button.button-quiet { background: transparent; color: var(--accent); }
+.button.button-quiet:hover { background: var(--topic-selected); }
