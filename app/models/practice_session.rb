@@ -41,6 +41,15 @@ class PracticeSession < ApplicationRecord
     update!(coaching_state: COACHING_STAGES[stage + 1])
   end
 
+  # Start over: forget today's coach conversation and go back to the first stage.
+  # Attempts are kept, so past submissions stay in the member's history.
+  def restart_coaching!
+    transaction do
+      conversation_messages.coaching.where(attempt_id: nil).destroy_all
+      update!(coaching_state: COACHING_STAGES.first)
+    end
+  end
+
   # Used when the AI fails, so an outage never keeps a candidate from coding.
   def skip_coaching!
     update!(coaching_state: COACHING_SKIPPED) if coaching_locked?

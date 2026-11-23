@@ -42,6 +42,10 @@ class Problem < ApplicationRecord
     Judge::Language.starter_code(self, language)
   end
 
+  def parameter_names
+    Judge::Language.parameter_names(self)
+  end
+
   private
 
   def interview_details_shape

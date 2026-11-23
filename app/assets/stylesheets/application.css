@@ -795,3 +795,7 @@ input[type=submit]:disabled { opacity: .65; cursor: progress; }
   .conversation-message:last-child,
   .editor-just-unlocked .editor-panel, .toast, .thinking-dots span { animation: none; }
 }
+.start-over { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
+.start-over p { margin: .6rem 0 0; }
+.button.button-quiet { background: transparent; color: var(--accent); }
+.button.button-quiet:hover { background: var(--topic-selected); }

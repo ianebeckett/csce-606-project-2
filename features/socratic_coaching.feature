@@ -57,3 +57,14 @@ Feature: US4 — Socratic Conceptual Auditing
     And I tell the coach "It is about numbers."
     Then I see "Step 1 of 3"
     And no stage was just passed
+  Scenario: Starting over clears the conversation and locks the editor again
+    Given I am signed in as a "Premium" member
+    And the coach accepts my explanations
+    When I open the problem "Contains Duplicate"
+    And I tell the coach "Given an array of integers, return true if any value appears at least twice."
+    And I tell the coach "Keep a hash set of the numbers seen so far and return true on a repeat."
+    Then the code editor is unlocked
+    When I click "Start over"
+    Then I see "Starting over."
+    And I see "Step 1 of 3"
+    And the code editor is locked

@@ -1,0 +1,29 @@
+
+build:
+  docker:
+    web:
+      dockerfile: Dockerfile
+      target: heroku-web
+    release:
+      dockerfile: Dockerfile
+      target: heroku-release
+    queue:
+      dockerfile: Dockerfile
+      target: heroku-queue
+
+release:
+  image: release
+  command:
+    - ./bin/rails
+    - db:migrate
+    - db:seed
+
+run:
+  web: bundle exec puma -C config/puma.rb
+  worker:
+    command:
+      - bundle
+      - exec
+      - rake
+      - jobs:work
+    image: queue
