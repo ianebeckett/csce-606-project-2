@@ -86,6 +86,9 @@ RSpec.describe "Coaching messages", type: :request do
       get problem_path(problem)
 
       expect(response.body).to include("data-chat-log", "data-chat-form", "Senior SWE is thinking")
+    end
+  end
+
   describe "when no OpenAI API key is configured" do
     before { sign_in(premium) }
 

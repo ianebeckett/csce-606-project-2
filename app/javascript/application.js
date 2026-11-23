@@ -118,6 +118,8 @@ if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", setUpChatPage)
 } else {
   setUpChatPage()
+}
+
 // Submission page: while the verdict is Pending, poll for it and reload
 // the page when it arrives, so the member doesn't have to refresh. The
 // Refresh result link still works without JavaScript.
