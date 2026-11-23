@@ -4,7 +4,7 @@ module Judge
       def starter_code(problem, language)
         return problem.starter_code if language == Attempt::LANGUAGE
 
-        parameters = ruby_parameters(problem)
+        parameters = parameter_names(problem)
         case language
         when "python" then python_starter(problem, parameters)
         when "go" then go_starter(problem, parameters)
@@ -13,14 +13,15 @@ module Judge
         end
       end
 
-      private
-
-      def ruby_parameters(problem)
+      # The Ruby starter code's signature is the source of parameter names.
+      def parameter_names(problem)
         match = problem.starter_code.match(/\Adef\s+#{Regexp.escape(problem.method_name)}\(([^)]*)\)/)
         raise ArgumentError, "Invalid Ruby starter code" unless match
 
         match[1].split(",").map(&:strip)
       end
+
+      private
 
       def python_starter(problem, parameters)
         <<~PYTHON

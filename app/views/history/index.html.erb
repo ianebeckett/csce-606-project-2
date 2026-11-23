@@ -1,39 +1,89 @@
 <% content_for :title, "My learning history · Code Coach" %>
-<h1>My learning history</h1>
 
-<section aria-labelledby="history-summary">
-  <h2 id="history-summary">Summary</h2>
-  <p>Problems solved: <%= @solved_count %></p>
-  <p>Reviews scheduled: <%= @review_count %></p>
-</section>
+<div class="page-heading history-heading">
+  <div>
+    <p class="eyebrow">YOUR PROGRESS</p>
+    <h1>My learning history</h1>
+    <p class="muted">See what you’ve solved and how your skills are growing.</p>
+  </div>
+  <div class="history-summary" aria-label="Learning summary">
+    <section class="stat-card history-stat" aria-labelledby="solved-summary">
+      <span id="solved-summary">Problems solved:</span>
+      <strong><%= @solved_count %></strong>
+    </section>
+    <section class="stat-card history-stat" aria-labelledby="reviews-summary">
+      <span id="reviews-summary">Reviews scheduled:</span>
+      <strong><%= @review_count %></strong>
+    </section>
+  </div>
+</div>
 
-<section aria-labelledby="topic-progress">
-  <h2 id="topic-progress">Progress by topic</h2>
-  <% if @topic_progress.empty? %>
-    <p>No topics are available yet.</p>
-  <% else %>
-    <ul>
-      <% @topic_progress.each do |progress| %>
-        <li><%= progress[:topic].name %>: <%= progress[:solved_count] %> / <%= progress[:total_count] %> problems solved</li>
-      <% end %>
-    </ul>
-  <% end %>
-</section>
+<div class="history-layout">
+  <section class="problem-panel history-progress" aria-labelledby="topic-progress">
+    <div class="panel-title">
+      <h2 id="topic-progress">Progress by topic</h2>
+      <span class="muted small"><%= @topic_progress.size %> topics</span>
+    </div>
+    <% if @topic_progress.empty? %>
+      <p class="empty-state">No topics are available yet.</p>
+    <% else %>
+      <div class="topic-progress-list">
+        <% @topic_progress.each do |progress| %>
+          <% topic = progress[:topic] %>
+          <% solved_count = progress[:solved_count] %>
+          <% total_count = progress[:total_count] %>
+          <% progress_max = [total_count, 1].max %>
+          <article class="topic-progress-item">
+            <div class="topic-progress-heading">
+              <h3><%= topic.name %></h3>
+              <span><%= solved_count %> / <%= total_count %> problems solved</span>
+            </div>
+            <div
+              class="topic-progress-track"
+              role="progressbar"
+              aria-label="<%= "#{topic.name} progress" %>"
+              aria-valuemin="0"
+              aria-valuemax="<%= progress_max %>"
+              aria-valuenow="<%= solved_count %>">
+              <span style="width: <%= (solved_count.to_f / progress_max * 100).round %>%"></span>
+            </div>
+          </article>
+        <% end %>
+      </div>
+    <% end %>
+  </section>
 
-<section aria-labelledby="past-attempts">
-  <h2 id="past-attempts">Past attempts</h2>
-  <% if @attempts.empty? %>
-    <p>No practice history yet. <%= link_to "Choose a problem to practice", problems_path %>.</p>
-  <% else %>
-    <ul>
-      <% @attempts.each do |attempt| %>
-        <li>
-          <%= link_to attempt.problem.title, history_path(attempt) %>
-          — <%= attempt.judge_result %>
-          (<%= attempt.passed_cases %> / <%= attempt.total_cases %> test cases)
-          — <%= attempt.created_at.strftime(ApplicationHelper::SUBMISSION_TIME_FORMAT) %>
-        </li>
-      <% end %>
-    </ul>
-  <% end %>
-</section>
+  <section class="problem-panel history-attempts" aria-labelledby="past-attempts">
+    <div class="panel-title">
+      <h2 id="past-attempts">Past attempts</h2>
+      <span class="muted small"><%= @attempts.size %> submissions</span>
+    </div>
+    <% if @attempts.empty? %>
+      <div class="empty-state history-empty">
+        <p>No practice history yet.</p>
+        <%= link_to "Choose a problem to practice", problems_path, class: "button" %>
+      </div>
+    <% else %>
+      <div class="history-attempt-list">
+        <% @attempts.each do |attempt| %>
+          <article class="history-attempt-row">
+            <div class="history-attempt-problem">
+              <p class="muted small"><%= attempt.problem.topic.name %></p>
+              <h3><%= link_to attempt.problem.title, history_path(attempt) %></h3>
+            </div>
+            <span class="badge <%= attempt.judge_result == Attempt::ACCEPTED ? "easy" : "history-result" %>">
+              <%= attempt.judge_result %>
+            </span>
+            <span class="history-attempt-cases">
+              <%= attempt.passed_cases %> / <%= attempt.total_cases %> test cases
+            </span>
+            <time class="history-attempt-date" datetime="<%= attempt.created_at.iso8601 %>">
+              <%= attempt.created_at.strftime(ApplicationHelper::SUBMISSION_TIME_FORMAT) %>
+            </time>
+            <%= link_to "View details →", history_path(attempt), class: "practice-link history-detail-link", aria: { label: "View #{attempt.problem.title} attempt details" } %>
+          </article>
+        <% end %>
+      </div>
+    <% end %>
+  </section>
+</div>

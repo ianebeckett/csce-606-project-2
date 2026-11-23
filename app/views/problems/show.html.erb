@@ -8,6 +8,10 @@
     <p class="problem-description"><%= @problem.description %></p>
     <%= render "problems/examples", problem: @problem %>
     <p class="small"><%= link_to "LeetCode", @problem.source_url, rel: "noreferrer" %></p>
+    <div class="start-over">
+      <%= button_to "Start over", problem_restart_path(@problem), class: "button button-quiet" %>
+      <p class="small muted">Clears today's coach conversation and resets the editor to the starter code. Your past submissions are kept.</p>
+    </div>
   </section>
   <div class="work-column">
   <%= render "problems/coach", practice_session: @coaching_session, problem: @problem if @coaching_session %>
