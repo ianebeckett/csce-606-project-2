@@ -1,6 +1,4 @@
 class CodeReviewsController < ApplicationController
-  UNAVAILABLE_MESSAGE = "AI code review is unavailable right now. Your code is saved, so please try again later.".freeze
-
   before_action :set_attempt
   before_action :require_premium
   before_action :require_code, only: :create
@@ -23,7 +21,8 @@ class CodeReviewsController < ApplicationController
     redirect_to attempt_code_review_path(@attempt)
   rescue CodeReview::Error => e
     Rails.logger.warn("AI code review failed for attempt #{@attempt.id}: #{e.message}")
-    redirect_to attempt_path(@attempt), alert: UNAVAILABLE_MESSAGE
+    redirect_to attempt_path(@attempt),
+      alert: "AI code review is unavailable right now (#{Ai.failure_reason(e)}). Your code is saved, so please try again later."
   end
 
   private
