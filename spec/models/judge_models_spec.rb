@@ -20,7 +20,7 @@ RSpec.describe "Online Judge models" do
     user = create_user
     session = user.practice_sessions.create!(problem: Problem.first, started_at: Time.current)
     session.attempts.create!(code: "def contains_duplicate(nums); false; end", language: "ruby")
-    expect { seed_judge }.not_to change { [ Problem.count, TestCase.count, Attempt.count ] }
+    expect { seed_judge(force: true) }.not_to change { [ Problem.count, TestCase.count, Attempt.count ] }
   end
 
   it "generates language starters without import boilerplate" do

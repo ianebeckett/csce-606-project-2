@@ -775,3 +775,7 @@ th { color: var(--muted); font-size: .75rem; }
 @keyframes verdict-glow { 0% { box-shadow: 0 0 0 0 rgb(199 179 255 / .6); } 100% { box-shadow: 0 0 0 16px rgb(199 179 255 / 0); } }
 @keyframes accepted-glow { 0% { box-shadow: 0 0 0 0 rgb(156 233 191 / .75); } 100% { box-shadow: 0 0 0 18px rgb(156 233 191 / 0); } }
 @media (prefers-reduced-motion: reduce) { .thinking-dots span, .result-card.just-judged { animation: none; } }
+.start-over { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
+.start-over p { margin: .6rem 0 0; }
+.button.button-quiet { background: transparent; color: var(--accent); }
+.button.button-quiet:hover { background: var(--topic-selected); }
