@@ -25,7 +25,7 @@
     <div class="panel-title"><h2 id="interviewer-title">Interviewer</h2></div>
     <div class="coach-body">
       <p class="coach-step"><%= interview_step_hint(@practice_session) %></p>
-      <ol class="conversation">
+      <ol class="conversation" tabindex="0" aria-label="Conversation with the interviewer" data-chat-log>
         <% @practice_session.conversation_messages.interview.chronological.each do |message| %>
           <li class="conversation-message <%= message.role %>">
             <strong><%= message.role == "user" ? "You" : "Interviewer" %></strong>
@@ -33,7 +33,8 @@
           </li>
         <% end %>
       </ol>
-      <%= form_with model: ConversationMessage.new, url: problem_interview_messages_path(@problem), local: true do |form| %>
+      <%= form_with model: ConversationMessage.new, url: problem_interview_messages_path(@problem), local: true,
+        data: { chat_form: "", chat_thinking: "The interviewer is thinking" } do |form| %>
         <%= form.label :content, "Your message" %>
         <%= form.text_area :content, rows: 4, required: true, data: { submit_on_ctrl_enter: "" } %>
         <%= form.submit "Send (Ctrl + Enter)", class: "button" %>

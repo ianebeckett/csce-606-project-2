@@ -99,6 +99,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Check application JavaScript syntax
+        run: node --check app/javascript/application.js
+
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:

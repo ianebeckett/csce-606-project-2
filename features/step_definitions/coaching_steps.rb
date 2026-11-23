@@ -32,3 +32,16 @@ Then("I see my message in the conversation") do
 end
 
 Then("I am told the coach is unavailable") { expect(page).to have_content("unavailable") }
+
+Then("the step hint shines") { expect(page).to have_css(".coach-step.stage-shine") }
+
+Then("no stage was just passed") { expect(page).not_to have_css(".coach-step.stage-shine") }
+
+Then("I am notified that the editor is unlocked") do
+  expect(page).to have_css("[data-testid='editor-unlocked']", text: "The editor is unlocked.")
+  expect(page).to have_link("Go to editor", href: "#editor-title")
+end
+
+Then("I am not notified that the editor is unlocked") do
+  expect(page).not_to have_css("[data-testid='editor-unlocked']")
+end
