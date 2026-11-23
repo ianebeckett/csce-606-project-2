@@ -45,7 +45,7 @@ scrubbing pattern must be updated before deployment.
 
 The judge image pins and verifies:
 
-- Ruby 4.0.1
+- Ruby 4.0.10
 - Python 3.15.2
 - Go 1.27.3
 - C++23 with GCC 16.2.0
