@@ -64,7 +64,7 @@ RSpec.describe Roadmap do
 
   it "seeds prerequisites idempotently without changing saved progress" do
     record_result(arrays.problems.first, Attempt::ACCEPTED)
-    expect { seed_judge }.not_to change { [ TopicPrerequisite.count, Attempt.count ] }
+    expect { seed_judge(force: true) }.not_to change { [ TopicPrerequisite.count, Attempt.count ] }
     expect(TopicPrerequisite.count).to eq(5)
     expect(pointers.prerequisites).to contain_exactly(arrays)
     expect(window.prerequisites).to contain_exactly(pointers)
