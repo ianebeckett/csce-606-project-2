@@ -57,6 +57,12 @@ Feature: US4 — Socratic Conceptual Auditing
     And I tell the coach "It is about numbers."
     Then I see "Step 1 of 3"
     And no stage was just passed
+  Scenario: The coach explains when the OpenAI API key is missing
+    Given I am signed in as a "Premium" member
+    When I open the problem "Contains Duplicate"
+    And I tell the coach "Return true if any number appears twice in the array."
+    Then I see "Senior SWE is unavailable right now (OpenAI API key is missing: set OPENAI_API_KEY on the server)."
+    And the code editor is unlocked
   Scenario: Starting over clears the conversation and locks the editor again
     Given I am signed in as a "Premium" member
     And the coach accepts my explanations

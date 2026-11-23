@@ -86,6 +86,13 @@ RSpec.describe "Coaching messages", type: :request do
       get problem_path(problem)
 
       expect(response.body).to include("data-chat-log", "data-chat-form", "Senior SWE is thinking")
+  describe "when no OpenAI API key is configured" do
+    before { sign_in(premium) }
+
+    it "says the API key is missing" do
+      tell_coach("Return true if any number appears twice.")
+
+      expect(flash[:alert]).to include("Senior SWE is unavailable right now", "OPENAI_API_KEY")
     end
   end
 
