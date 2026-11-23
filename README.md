@@ -24,7 +24,7 @@ Changing plans is a free mock toggle; there is no payment step. See the
 #### Install
 
 - Git
-- Ruby 4.0.1
+- Ruby 4.0.10
 - Bundler 4.0.19
 - GNU Make
 - Docker Desktop (macOS or Windows) or Docker Engine with the Compose plugin (Linux)
