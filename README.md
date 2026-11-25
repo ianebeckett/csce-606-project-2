@@ -53,15 +53,17 @@ See the [user guide](docs/user_guide.md) for roadmap states and practice, and
 
 ### Database
 
-All environments use PostgreSQL. Local defaults are `127.0.0.1:5432`, user and
+All environments use PostgreSQL. Local defaults are `127.0.0.1:5433`, user and
 password `codecoach`, with separate `codecoach_development` and `codecoach_test`
-databases. The Docker port is bound only to localhost. If port 5432 is occupied,
-use `PGPORT=5433 make run` and use the same `PGPORT` for later Rails/test commands.
+databases. The Docker port is bound only to localhost. Port 5433 avoids a
+system PostgreSQL server on the usual port 5432. If port 5433 is occupied,
+use `PGPORT=5434 make run` and use the same `PGPORT` for later Rails/test commands.
 
 To use an existing PostgreSQL server, set `PGHOST`, `PGPORT`, `PGUSER`, and
 `PGPASSWORD`, or set `DATABASE_URL`. Setup skips the Docker database when
 `PGHOST` or `DATABASE_URL` is set. The local role needs permission to create the
-development and test databases. For source builds of the `pg` gem, install
+development and test databases. Set `PGPORT=5432` for an existing server using
+the standard PostgreSQL port. For source builds of the `pg` gem, install
 PostgreSQL development headers (`libpq-dev` on Debian/Ubuntu or `libpq` on
 Homebrew, with `pg_config` on `PATH`).
 
@@ -173,6 +175,18 @@ The `docker` group grants root-level privileges. See Docker's official
 [Linux post-installation instructions](https://docs.docker.com/engine/install/linux-postinstall/).
 
 ## Troubleshooting
+
+**Database password authentication fails even though Compose reports healthy.**
+Check `docker compose port db 5432`: it should print `127.0.0.1:5433` with
+the default configuration. Rails and Compose must use the same `PGPORT`.
+A healthy container does not prove Rails is connecting to it; another local
+PostgreSQL server may be answering on port 5432. If the container has no
+published port, recreate it while keeping its data volume:
+
+```sh
+docker compose up -d --wait --force-recreate db
+RAILS_ENV=test bin/rails db:prepare
+```
 
 **Ruby 4.0.1 fails to install on macOS 26 with a `miniruby` segmentation fault.** This is [Ruby bug #22311](https://bugs.ruby-lang.org/issues/22311): the macOS 27 SDK declares `pipe2()` and `dup3()`, which macOS 26 does not have. Install with:
 
