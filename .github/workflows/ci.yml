@@ -32,6 +32,7 @@ jobs:
     env:
       RAILS_ENV: test
       PGHOST: 127.0.0.1
+      PGPORT: 5432
       PGUSER: codecoach
       PGPASSWORD: codecoach
       COVERAGE: "1"

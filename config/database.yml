@@ -8,7 +8,7 @@ default: &default
 development: &local
   <<: *default
   host: <%= ENV.fetch("PGHOST", "127.0.0.1") %>
-  port: <%= ENV.fetch("PGPORT", 5432) %>
+  port: <%= ENV.fetch("PGPORT", 5433) %>
   username: <%= ENV.fetch("PGUSER", "codecoach") %>
   password: <%= ENV.fetch("PGPASSWORD", "codecoach") %>
   database: codecoach_development
