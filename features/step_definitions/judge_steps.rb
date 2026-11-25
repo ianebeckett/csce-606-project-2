@@ -96,6 +96,8 @@ Given("the executor returns the predefined case results") do
 end
 
 Given("the judge reports a compilation error") do
+  next if ENV["JUDGE_INTEGRATION"] == "1"
+
   use_scripted_executor(compilation: executor_result(stderr: "syntax error: private compiler output", exit_status: 1))
 end
 

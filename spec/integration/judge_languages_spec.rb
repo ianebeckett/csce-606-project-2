@@ -27,6 +27,26 @@ RSpec.describe Judge::DockerRunner, :integration, :docker do
         expect(result.fetch("status")).to eq("Runtime Error")
         expect(result.fetch("outputs")).to be_empty
       end
+
+      it "reports a real compilation error" do
+        problem = Problem.find_by!(slug: "contains-duplicate")
+        result = described_class.new.call(
+          code: LanguageSolutions::INVALID.fetch(language), language: language,
+          problem: problem, inputs: [ problem.test_cases.first.input ])
+
+        expect(result.fetch("status")).to eq("Compilation Error")
+        expect(result.fetch("outputs")).to be_empty
+      end
+
+      it "terminates a real infinite loop with a timeout" do
+        problem = Problem.find_by!(slug: "contains-duplicate")
+        result = described_class.new.call(
+          code: LanguageSolutions::TIMEOUT.fetch(language), language: language,
+          problem: problem, inputs: [ problem.test_cases.first.input ])
+
+        expect(result.fetch("status")).to eq("Timeout")
+        expect(result.fetch("outputs")).to be_empty
+      end
     end
   end
 end

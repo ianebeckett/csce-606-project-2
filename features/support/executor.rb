@@ -16,9 +16,9 @@ module ExecutorSteps
       expect(inputs).to eq(problem.test_cases.order(:position).map(&:input))
 
       command = instance_double(Command)
-      expect(command).to receive(:call).with(anything, timeout: 15).ordered.and_return(compilation)
+      expect(command).to receive(:call).with(anything, timeout: Judge::DockerRunner::COMPILE_TIMEOUT).ordered.and_return(compilation)
       Array(case_results&.call(problem)).each do |result|
-        expect(command).to receive(:call).with(anything, timeout: 4).ordered.and_return(result)
+        expect(command).to receive(:call).with(anything, timeout: Judge::DockerRunner::CASE_TIMEOUT).ordered.and_return(result)
       end
 
       payload = Judge::Payload.build(code: code, language: language, problem: problem, inputs: inputs).deep_stringify_keys

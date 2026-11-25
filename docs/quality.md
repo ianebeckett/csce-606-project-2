@@ -36,7 +36,8 @@ example so its failure and duration are visible separately.
 The expensive Python/Go/C++ compiler checks live in
 `spec/integration/judge_languages_spec.rb`, tagged `integration`, and are excluded
 from ordinary RSpec runs. They still execute real solutions against every
-predefined case, including linked lists, and verify real runtime failures.
+predefined case, including linked lists, and verify real compilation errors,
+runtime failures, and infinite-loop timeouts in each language.
 Run just these checks locally with:
 
 ```sh
@@ -52,7 +53,7 @@ two seconds on a ready local database and judge image, not a hard CI timing gate
 Acceptance tests retain real Ruby judging and error recovery. In development,
 language-selection scenarios delegate to the real Ruby executor with scripted
 compiler/process results. Full acceptance validation uses real compilers for
-those scenarios. Linked-list result handling, compilation failures, timeouts,
+those scenarios and compilation failures. Linked-list result handling, timeouts,
 and malformed/excessive output use scripted commands in both modes. This measures
 payload construction, wrapper generation, parsing, and failure handling without
 launching additional containers or waiting for deadlines. It does not establish
