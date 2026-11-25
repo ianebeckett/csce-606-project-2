@@ -21,8 +21,8 @@ JavaScript and template coverage are outside this Ruby measurement.
 CI uses a fresh report directory and uploads the individual and combined
 reports as `coverage` artifacts, retained for 14 days.
 
-To run locally, start Docker with Linux containers, install the repository's
-Ruby and gems, then:
+To run locally, follow the [dependency installation commands](../README.md#install),
+start Docker with Linux containers, then:
 
 ```sh
 bin/judge-build

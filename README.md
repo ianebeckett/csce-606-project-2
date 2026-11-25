@@ -23,18 +23,114 @@ Changing plans is a free mock toggle; there is no payment step. See the
 
 #### Install
 
-- Git
-- Ruby 4.0.10
-- Bundler 4.0.19
-- GNU Make
-- Docker Desktop (macOS or Windows) or Docker Engine with the Compose plugin (Linux)
+Use the commands for your OS below, then install the project gems. The project
+requires Ruby 4.0.10, Bundler 4.0.19, Git, GNU Make, and Docker with Compose.
+
+##### macOS
+
+Install [Homebrew](https://brew.sh/) and the Xcode Command Line Tools
+first (`xcode-select --install` if they are missing), then run:
+
+```sh
+brew update
+brew install git rbenv ruby-build make openssl@3 libyaml readline libpq vips rust
+brew install --cask docker-desktop
+export PATH="$(brew --prefix libpq)/bin:$PATH"
+```
+
+Open [Docker Desktop](https://formulae.brew.sh/cask/docker-desktop) and finish its
+initial setup. The `libpq` PATH entry makes `pg_config` available when building
+the `pg` gem; add it to your shell startup file or repeat the export after opening
+a new terminal. Continue with [Ruby and project gems](#ruby-and-project-gems).
+
+##### Windows
+
+Use Ubuntu through Windows Subsystem for Linux (WSL2) for the application tools,
+and Docker Desktop for Linux containers.
+
+1. If WSL is not installed, run this in **PowerShell as Administrator**, then
+   restart Windows if prompted:
+
+   ```powershell
+   wsl --install -d Ubuntu
+   ```
+
+   Open Ubuntu and create your Linux username/password. For existing WSL setups,
+   use `wsl --list --verbose` to check that Ubuntu uses version 2; see
+   [Microsoft's WSL setup guide](https://learn.microsoft.com/en-us/windows/wsl/install).
+2. Install and open [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/).
+   Select the WSL2 backend and enable Ubuntu under **Settings > Resources > WSL
+   Integration**. See [Docker's WSL integration guide](https://docs.docker.com/desktop/features/wsl/).
+3. In the **Ubuntu terminal**, run the first dependency-install block in
+   [Ubuntu](#ubuntu) below. Skip the Docker Engine installation and Linux Docker
+   group steps: Docker Desktop supplies Docker and Compose through WSL integration.
+4. Continue with [Ruby and project gems](#ruby-and-project-gems) in that Ubuntu
+   terminal. Clone the repository inside your Linux home directory (for example,
+   `~/codecoach`) and run all subsequent project commands there, including
+   `make run`. Open the application URL in your Windows browser.
+
+##### Ubuntu
+
+On Ubuntu 24.04 or later, install rbenv, Ruby build dependencies, PostgreSQL
+headers for the `pg` gem, and libvips for image processing:
+
+```sh
+sudo apt-get update
+sudo apt-get install -y git curl ca-certificates build-essential autoconf \
+  rbenv libssl-dev libyaml-dev libreadline-dev zlib1g-dev libffi-dev \
+  libgmp-dev rustc libpq-dev libvips-dev
+
+mkdir -p "$(rbenv root)/plugins"
+if [ -d "$(rbenv root)/plugins/ruby-build" ]; then
+  git -C "$(rbenv root)/plugins/ruby-build" pull --ff-only
+else
+  git clone https://github.com/rbenv/ruby-build.git "$(rbenv root)/plugins/ruby-build"
+fi
+```
+
+For a fresh Ubuntu Docker installation, use Ubuntu's Engine and Compose packages:
+
+```sh
+sudo apt-get install -y docker.io docker-compose-v2
+sudo systemctl enable --now docker
+```
+
+If Docker is already installed, keep that installation and check
+`docker compose version` instead. For Docker's own packages, follow the
+[official Ubuntu instructions](https://docs.docker.com/engine/install/ubuntu/).
+Then follow [Docker permissions](#docker-permissions-on-linux) so your normal
+user can run Docker.
+
+##### Ruby and project gems
+
+On all platforms, use Bash or Zsh (inside Ubuntu on Windows). Run `rbenv init`
+once and follow its shell setup instructions, then open a new terminal. Clone
+the repository if needed and run the following from its root:
+
+```sh
+eval "$(rbenv init -)"
+rbenv install -s "$(cat .ruby-version)"
+ruby -v
+gem install bundler -v 4.0.19
+bundle install
+```
+
+The repository's `.ruby-version` selects Ruby automatically; no global version
+change is needed. If `rbenv install --list-all` does not show the required
+version, update ruby-build and retry: for a Git plugin, run
+`git -C "$(rbenv root)/plugins/ruby-build" pull --ff-only`; for Homebrew, run
+`brew update && brew upgrade ruby-build`. If both are installed, update the Git
+plugin too. The version list is local and does not refresh itself. See
+[ruby-build setup](https://github.com/rbenv/ruby-build#installation) and its
+[build prerequisites](https://github.com/rbenv/ruby-build/wiki#suggested-build-environment).
 
 #### Run
 
-1. Clone this repository.
+1. Open a terminal in the repository after completing [Install](#install).
 2. Start Docker and confirm `docker info` succeeds without `sudo`.
-   On Linux, after joining the `docker` group, run `newgrp docker` or log out
-   and back in, then retry. See [Docker permissions](#docker-permissions-on-linux).
+   On Ubuntu with Docker Engine, after joining the `docker` group, run
+   `newgrp docker` or log out and back in, then retry. See
+   [Docker permissions](#docker-permissions-on-linux).
 3. Run `make run` from the project directory to start local development.
 4. Open <http://127.0.0.1:3000> and select **Create account**. To try Premium
    features, follow step 3 of [Use the deployed app](#use-the-deployed-app).
@@ -120,7 +216,7 @@ those features show an "unavailable" message instead.
 
 ## Tests and quality checks
 
-Install the Ruby version in `.ruby-version` and run `bundle install`, then:
+Complete [Install](#install), then:
 
 ```sh
 bin/judge-build
