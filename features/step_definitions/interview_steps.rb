@@ -6,10 +6,11 @@ Given("the interviewer wants more detail") do
   use_ai_client(Ai::FakeClient.new(reply: { message: "Can you say more?", advance: false }.to_json))
 end
 
-Given("the interviewer is the real AI") do
-  client = Ai.client_from_env
-  skip_this_scenario("OPENAI_API_KEY is not set") unless client
-  use_ai_client(client)
+Given("the AI service returns a clarifying answer") do
+  # Keep the adapter/parser integration, replacing only the HTTP transport.
+  reply = { message: "The list contains between 1 and 100,000 integers.", advance: false }.to_json
+  body = { output: [ { type: "message", content: [ { type: "output_text", text: reply } ] } ] }.to_json
+  use_ai_client(Ai::OpenAiClient.new(api_key: "test", transport: ->(*) { [ 200, body ] }))
 end
 
 When("I start the interview for {string}") do |title|

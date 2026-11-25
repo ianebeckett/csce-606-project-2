@@ -1,0 +1,48 @@
+
+<% content_for :title, "Due Reviews · Code Coach" %>
+
+<div class="page-heading">
+  <div>
+    <h1>Due Reviews</h1>
+    <p class="muted">Practice problems that are due today or overdue.</p>
+  </div>
+</div>
+
+<% if @due_reviews.any? %>
+  <div class="review-table-wrap">
+    <table>
+      <thead>
+      <tr>
+        <th scope="col">Problem</th>
+        <th scope="col">Difficulty</th>
+        <th scope="col">Due Date</th>
+        <th scope="col">Action</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      <% @due_reviews.each do |review| %>
+        <tr>
+          <td>
+            <%= link_to review.problem.title, problem_path(review.problem) %>
+          </td>
+          <td><%= review.problem.difficulty %></td>
+          <td><%= review.next_review_date.strftime("%b %d, %Y") %></td>
+          <td>
+            <%= link_to "Review Now",
+                        problem_path(review.problem),
+                        class: "due-review-action" %>
+          </td>
+        </tr>
+      <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <p class="empty-state">No problems are due for review. Great job!</p>
+<% end %>
+
+<div class="review-page-actions">
+  <%= link_to "Back to Problems", problems_path,
+              class: "button back-link" %>
+</div>

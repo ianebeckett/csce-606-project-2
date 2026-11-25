@@ -1,37 +1,48 @@
-<h1>Problems Due for Review</h1>
 
-<p>
-  Practice previously solved problems to strengthen your understanding.
-</p>
+<% content_for :title, "Upcoming Reviews · Code Coach" %>
 
-<% if @due_reviews.any? %>
-  <table>
-    <thead>
-    <tr>
-      <th scope="col">Problem</th>
-      <th scope="col">Difficulty</th>
-      <th scope="col">Review Date</th>
-      <th scope="col">Action</th>
-    </tr>
-    </thead>
+<div class="page-heading">
+  <div>
+    <h1>Upcoming Reviews</h1>
+    <p class="muted">Practice previously solved problems to strengthen your understanding.</p>
+  </div>
+</div>
 
-    <tbody>
-    <% @due_reviews.each do |review| %>
+<% if @upcoming_reviews.any? %>
+  <div class="review-table-wrap">
+    <table>
+      <thead>
       <tr>
-        <!-- Display the coding problem's title -->
-        <td><%= review.problem.title %></td>
-        <td><%= review.problem.difficulty %></td>
-        <td>
-          <%= review.next_review_date.strftime("%b %d, %Y") %>
-        </td>
-        <td>
-          <%= link_to "Practice Now",
-                      problem_path(review.problem.slug) %>
-        </td>
+        <th scope="col">Problem</th>
+        <th scope="col">Difficulty</th>
+        <th scope="col">Review Date</th>
+        <th scope="col">Action</th>
       </tr>
-    <% end %>
-    </tbody>
-  </table>
+      </thead>
+
+      <tbody>
+      <% @upcoming_reviews.each do |review| %>
+        <tr>
+          <td>
+            <%= link_to review.problem.title, problem_path(review.problem) %>
+          </td>
+          <td><%= review.problem.difficulty %></td>
+          <td><%= review.next_review_date.strftime("%b %d, %Y") %></td>
+          <td>
+            <%= link_to "Practice Now",
+                        problem_path(review.problem),
+                        class: "practice-link" %>
+          </td>
+        </tr>
+      <% end %>
+      </tbody>
+    </table>
+  </div>
 <% else %>
-  <p>No problems are due for review. Great job!</p>
+  <p class="empty-state">You don't have any upcoming reviews scheduled.</p>
 <% end %>
+
+<div class="review-page-actions">
+  <%= link_to "Back to Problems", problems_path,
+              class: "button back-link" %>
+</div>

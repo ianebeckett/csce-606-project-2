@@ -1,5 +1,10 @@
 # Sprint 2 Planning
 
+**Sprint dates:** October 30–November 23, 2026, confirmed retrospectively by
+Ian on November 23. The merge targets below are the original targets, not
+completion evidence. See the [daily report](sprint-2-daily-scrum.md) and
+[Sprint 3 planning](sprint-3-planning.md) for the handoff.
+
 | Person | Work | Issue | Story points | Merge target |
 | --- | --- | --- | ---: | --- |
 | Ian Beckett (`ianebeckett`) | Cloud deployment and database migration | [#79: Deploy the app to production](https://github.com/ianebeckett/csce-606-project-2/issues/79) | 8 | November 16 |

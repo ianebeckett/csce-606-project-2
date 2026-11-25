@@ -11,13 +11,16 @@ class CoachingMessagesController < ApplicationController
 
     reply = Coaching::Coach.new(client: Ai.client).call(@practice_session)
     @practice_session.conversation_messages.create!(role: "assistant", content: reply.message)
+    passed_stage = @practice_session.coaching_state
     @practice_session.advance_coaching! if reply.advance
+    flash[:coaching_stage_passed] = passed_stage if @practice_session.coaching_state != passed_stage
     redirect_to problem_path(@problem)
   rescue Coaching::Error => e
     Rails.logger.warn("Coaching failed for practice session #{@practice_session.id}: #{e.message}")
     @practice_session.skip_coaching!
     redirect_to problem_path(@problem),
-      alert: "#{@practice_session.coach_name} is unavailable right now. Your message is saved, and the editor is unlocked."
+      alert: "#{@practice_session.coach_name} is unavailable right now (#{Ai.failure_reason(e)}). " \
+             "Your message is saved, and the editor is unlocked."
   end
 
   private

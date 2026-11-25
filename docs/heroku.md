@@ -1,6 +1,8 @@
 # Single-app Heroku deployment
 
-Code Coach uses one Heroku app with four process images:
+The Container-stack Git deploy uses the repository's `heroku.yml` to build
+four images in one Heroku app. The background process is named `queue`
+throughout the manifest, Dockerfile, and formation commands:
 
 ```text
 web      Rails HTTP server
@@ -10,9 +12,12 @@ judge    two ready, single-use multi-language one-off dynos
 ```
 
 The `web`, `queue`, and `release` images come from separate targets in the root
-`Dockerfile`. The `judge` image comes from `judge/Dockerfile`. The judge
-formation stays at zero. The queue worker maintains two ready one-off `judge`
-dynos, consumes each at most once, and replenishes it as soon as it is claimed.
+`Dockerfile`. The `judge` image comes from `judge/Dockerfile`, with `judge/`
+as its build context. It contains `ready.rb`, `warmup.go`, and the isolated
+executor, without Rails source. The manifest omits `run`, so each image's
+`CMD` applies: in particular, `queue` starts `bundle exec ruby bin/judge-worker`.
+The judge formation stays at zero. The queue worker maintains two ready one-off
+`judge` dynos, consumes each at most once, and replenishes it when claimed.
 
 This design requires a one-time Container-stack conversion, two judge config
 vars, and a persistent Rails secret (`SECRET_KEY_BASE` or credentials configured
@@ -49,7 +54,7 @@ scrubbing pattern must be updated before deployment.
 
 The judge image pins and verifies:
 
-- Ruby 4.0.1
+- Ruby 4.0.1 (the judge runtime; Rails uses `.ruby-version`)
 - Python 3.15.2
 - Go 1.27.3
 - C++23 with GCC 16.2.0
@@ -83,78 +88,37 @@ Heroku Common Runtime dynos can make outbound internet requests. This design
 isolates Rails files and config-var values, but does not establish the local
 Docker `--network none` condition.
 
-## One-time setup for the app owner
+## Deploy through the manifest
 
-Run these steps from a clean checkout of team `main` after this pull request and
-the background-judge change are merged.
+The supported path is a Git deployment to the Container stack. Heroku builds
+`web`, `queue`, `release`, and `judge` from the same commit, then runs
+`./bin/rails db:migrate db:seed` from the release image. No separate
+`container:push` or `container:release` is needed for the judge image.
+The runner selects that image using Platform API `type: "judge"` and supplies
+its own single-use command (`960s ruby /judge/ready.rb` for a prepared dyno).
+The judge image retains its `timeout --signal=KILL` entrypoint.
+
+Heroku documents the manifest build contexts and Dockerfile `CMD` fallback in
+[Building Docker Images with heroku.yml](https://devcenter.heroku.com/articles/build-docker-images-heroku-yml).
+One-off dynos select the image by process type, as described in
+[Container Registry & Runtime](https://devcenter.heroku.com/articles/container-registry-and-runtime#one-off-dynos).
+
+### 1. Confirm configuration and budget
+
+Use a clean checkout of the reviewed commit. For the existing app, retain its
+Postgres add-on and persistent Rails secret (`SECRET_KEY_BASE`, or credentials
+configured through `RAILS_MASTER_KEY`). Never bake secrets into images.
 
 ```bash
-APP=<ian-heroku-app-name>
-```
-
-### 1. Convert the existing app to the Container stack
-
-This retains the app, add-ons, database, config vars, and public domain. It
-changes how future releases are built.
-
-```bash
+APP=codecoach
+heroku apps:info --app "$APP"
 heroku stack:set container --app "$APP"
-heroku container:login
+heroku git:remote --app "$APP"
 ```
 
-### 2. Build the four process images
-
-Build `linux/amd64` even when deploying from an Apple Silicon Mac. Disable
-provenance and export Docker media types for Heroku Container Registry.
-
-```bash
-docker buildx build \
-  --platform linux/amd64 \
-  --target heroku-web \
-  --provenance=false \
-  --output type=docker,oci-mediatypes=false \
-  --tag "registry.heroku.com/$APP/web" \
-  --file Dockerfile .
-
-docker buildx build \
-  --platform linux/amd64 \
-  --target heroku-queue \
-  --provenance=false \
-  --output type=docker,oci-mediatypes=false \
-  --tag "registry.heroku.com/$APP/queue" \
-  --file Dockerfile .
-
-docker buildx build \
-  --platform linux/amd64 \
-  --target heroku-release \
-  --provenance=false \
-  --output type=docker,oci-mediatypes=false \
-  --tag "registry.heroku.com/$APP/release" \
-  --file Dockerfile .
-
-docker buildx build \
-  --platform linux/amd64 \
-  --provenance=false \
-  --output type=docker,oci-mediatypes=false \
-  --tag "registry.heroku.com/$APP/judge" \
-  --file judge/Dockerfile judge
-```
-
-Push and release all four images:
-
-```bash
-docker push "registry.heroku.com/$APP/web"
-docker push "registry.heroku.com/$APP/queue"
-docker push "registry.heroku.com/$APP/release"
-docker push "registry.heroku.com/$APP/judge"
-
-heroku container:release release web queue judge --app "$APP"
-```
-
-### 3. Create the Platform API authorization
-
-Use a revocable `write`-scope authorization instead of the account-wide CLI
-token. The example expires after one year; use a shorter period for testing.
+The owner must configure `JUDGE_HEROKU_APP` and `JUDGE_HEROKU_TOKEN`. Reuse the
+existing revocable authorization if it is still valid. For a new installation,
+create a write-scope authorization and copy its token directly into Config Vars:
 
 ```bash
 heroku authorizations:create \
@@ -163,69 +127,83 @@ heroku authorizations:create \
   --description codecoach-judge
 ```
 
-Copy the token once into the same app's Config Vars and record the authorization
-ID for future rotation or revocation:
+Do not put the token in Git, scripts, submitted payloads, dyno commands, or logs.
+Record its authorization ID for rotation with `heroku authorizations:revoke`.
 
 ```text
-JUDGE_HEROKU_APP=<same value as APP>
-JUDGE_HEROKU_TOKEN=<OAuth token>
-JUDGE_READY_POOL_SIZE=2
+JUDGE_HEROKU_APP=codecoach
+JUDGE_HEROKU_TOKEN=<revocable OAuth token>
+JUDGE_READY_POOL_SIZE=0
 ```
+
+Keep the pool disabled until the team/app owner approves the ongoing cost below.
+The code defaults to two slots when the variable is absent, so set `0`
+explicitly if approval is pending. After approval, set it to `2` for the
+reviewer's two-slot smoke test, or `1` for a smaller pool. Config changes restart
+the worker. A merged PR alone is not budget approval.
+
+### 2. Build and release the reviewed commit
+
+From the clean checkout intended for deployment:
 
 ```bash
-heroku authorizations:revoke <authorization-id>
+git push heroku HEAD:main
 ```
 
-Do not put the token in Git, shell scripts, submitted-code payloads, database
-records, dyno commands, or logs.
+Check the build output for all four images, including `judge/Dockerfile`, and
+a successful release phase. This replaces the earlier manual registry flow;
+do not release only an old queue or judge image afterward. They share the
+readiness protocol and must be deployed together.
 
-### 4. Scale the formation
-
-Do this only after the background-judge dependency and delayed-job migration are
-present. Its queue process executes:
-
-```bash
-QUEUE=judge bundle exec ruby bin/judge-worker
-```
-
-Scale one Basic web dyno and one Basic queue dyno. Keep the judge formation at
-zero because it is only a one-off process image.
+### 3. Scale the formation
 
 ```bash
 heroku ps:type web=basic queue=basic judge=basic --app "$APP"
 heroku ps:scale web=1 queue=1 judge=0 --app "$APP"
 ```
 
-### 5. Verify the release
+There must be exactly one background queue process. If an earlier deployment
+scaled a `worker` process, stop it before starting `queue` so two workers do not
+each create a pool. The manifest no longer declares a `worker` process.
+`judge=0` disables persistent judge formation dynos; the queue still creates
+short-lived one-off judge dynos when requested.
+
+### 4. Verify the actual release
 
 ```bash
-heroku apps:info --app "$APP"
-curl --fail "<Web URL from heroku apps:info>/up"
-heroku ps --app "$APP"
 heroku releases --app "$APP"
+heroku ps --app "$APP"
+curl --fail "https://codecoach-368f4d281974.herokuapp.com/up"
+heroku logs --app "$APP" --dyno queue --num 200
 ```
 
-Verify through the browser:
+For the approved two-slot smoke test:
 
-1. Ruby, Python, Go, and C++ correct solutions return Accepted with all cases.
-2. Wrong Answer, Compilation Error, Runtime Error, and Timeout are saved.
-3. Submission initially returns Pending and does not hold the HTTP request open.
-4. The judge formation is zero, while two ready one-off judge dynos remain
-   after warm-up. Submissions consume a dyno and trigger a replacement.
-5. Rails and Heroku logs contain no credential values or compiler output.
+1. Confirm the release's source commit and that `queue.1` starts
+   `bundle exec ruby bin/judge-worker`.
+2. Wait for `Judge ready pool: ready=2, target=2` in queue logs. With a pool
+   size of zero, absence of this line is expected and does not verify prewarming.
+3. Submit a correct Go solution for Contains Duplicate through the app. Check
+   Pending followed by Accepted with 6/6 cases and saved source. Record the
+   attempt ID, release, and elapsed time.
+4. Correlate the submission with `Judge ready pool: claimed` and a subsequent
+   return to `ready=2`. Check `heroku ps` for one queue worker and unused judge
+   one-offs; do not scale the judge formation above zero.
+5. Check Compilation Error and Timeout recovery, retained source, and the
+   absence of credentials and compiler diagnostics in application logs.
+
+The 2026-11-11 v18 timings in PR #90 predate this manifest path and are historical
+evidence only. They do not validate a new release. On 2026-11-25, read-only
+inspection found v24 (`5acc546e`) running `queue.1` with `rake jobs:work` and no
+ready judge dynos. The revised manifest still needs the above deployment smoke
+test; local tests cannot establish production readiness or fresh latency figures.
 
 ## Subsequent deployments
 
-An ordinary buildpack/Git deploy does not build four Container Registry process
-images. Repeat the build, push, and `container:release` commands above, or put
-the same commands in the team's deployment workflow after merge. Do not use
-`git push heroku main` after the app is converted to the Container stack unless
-that workflow is explicitly configured to build all process images.
-
-Deploy the queue and judge images together: the pool requires `judge/ready.rb`
-in the judge image. The `JUDGE_READY_POOL_SIZE=0` setting disables prewarming
-while preserving on-demand judging. Roll back queue and judge together if
-reverting the protocol.
+Repeat `git push heroku HEAD:main` from the reviewed checkout. The manifest
+builds and releases all four images together. Keep exactly one `queue` dyno.
+`JUDGE_READY_POOL_SIZE=0` disables prewarming while preserving on-demand judging.
+Roll back the whole release if reverting the queue/judge readiness protocol.
 
 ## Rollback
 
@@ -241,10 +219,11 @@ path must be disabled. Revoke and replace an exposed OAuth authorization.
 
 ## Monthly cost estimate
 
-Heroku's published Common Runtime rates observed on 2026-11-09 are approximately
-$0.01 per Basic dyno hour, capped at $7 per continuously running Basic dyno, and
-$5 per month for Essential-0 Postgres. Charges are prorated. Student credits
-reduce the invoice rather than changing these resource prices.
+Heroku's [published Common Runtime rates](https://devcenter.heroku.com/articles/usage-and-billing),
+checked on 2026-11-25, are approximately $0.01 per Basic dyno hour, capped at $7
+per continuously running Basic dyno, and $5 per month for Essential-0 Postgres.
+Charges are prorated. Student credits reduce the invoice rather than changing
+these resource prices.
 
 | Resource | Monthly estimate before credits |
 | --- | ---: |
@@ -320,6 +299,7 @@ After the probes, `heroku ps` showed only `web.1`; no one-off dyno remained.
 
 Official references:
 
+- [Building Docker Images with heroku.yml](https://devcenter.heroku.com/articles/build-docker-images-heroku-yml)
 - [Container Registry & Runtime](https://devcenter.heroku.com/articles/container-registry-and-runtime)
 - [Platform API Reference](https://devcenter.heroku.com/articles/platform-api-reference)
 - [One-Off Dynos](https://devcenter.heroku.com/articles/one-off-dynos)

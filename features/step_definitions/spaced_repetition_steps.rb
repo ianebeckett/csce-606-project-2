@@ -47,3 +47,57 @@ Then("I see the saved review date") do
                     )
   end
 end
+
+
+
+Given("I have three upcoming reviews scheduled") do
+  raise "Signed-in user missing" unless @user
+
+  problems = Problem.order(:id).limit(3)
+  raise "At least three problems are required" unless problems.size == 3
+
+  @upcoming_reviews = problems.each_with_index.map do |problem, index|
+    @user.review_schedules.create!(
+      problem: problem,
+      next_review_date: Date.current + (index + 1).days,
+      interval_days: index + 1
+    )
+  end
+end
+
+Then("I see the two soonest upcoming reviews on the dashboard") do
+  within("section[aria-labelledby='upcoming-reviews-title']") do
+    @upcoming_reviews.first(2).each do |review|
+      expect(page).to have_content(review.problem.title)
+    end
+
+    expect(page).not_to have_content(@upcoming_reviews.last.problem.title)
+  end
+end
+
+Then("I see the dates for those upcoming reviews") do
+  within("section[aria-labelledby='upcoming-reviews-title']") do
+    @upcoming_reviews.first(2).each do |review|
+      expect(page).to have_content(
+                        review.next_review_date.strftime("%b %d, %Y")
+                      )
+    end
+  end
+end
+
+Then("I can open the full upcoming reviews list") do
+  expect(page).to have_link("View All", href: reviews_path)
+end
+
+When("I select the upcoming reviews {string} link") do |link_text|
+  click_link link_text
+end
+
+Then("I see all three upcoming reviews in date order") do
+  positions = @upcoming_reviews.map do |review|
+    expect(page).to have_content(review.problem.title)
+    page.body.index(review.problem.title)
+  end
+
+  expect(positions).to eq(positions.sort)
+end

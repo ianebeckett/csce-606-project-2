@@ -16,9 +16,8 @@ RSpec.describe "Coaching messages", type: :request do
   end
 
   describe "when the AI service fails" do
-    # A real request with a key OpenAI rejects, so the failure is genuine.
     before do
-      use_ai_client(Ai::OpenAiClient.new(api_key: "sk-invalid-key-for-testing"))
+      use_ai_client(Ai::FakeClient.new(error: Ai::Error.new("OpenAI returned 401: Invalid API key")))
       sign_in(premium)
       tell_coach("Return true if any number appears twice.")
     end
@@ -30,6 +29,72 @@ RSpec.describe "Coaching messages", type: :request do
 
     it "unlocks the editor so the candidate can code" do
       expect(coaching_session(premium).coaching_state).to eq("skipped")
+    end
+  end
+
+  describe "stage progress" do
+    before { sign_in(premium) }
+
+    it "remembers the stage just passed for the next page only" do
+      use_ai_client(Ai::FakeClient.new(reply: { message: "Right.", advance: true }.to_json))
+
+      tell_coach("Return true if any number repeats.")
+      expect(flash[:coaching_stage_passed]).to eq("problem")
+
+      follow_redirect!
+      expect(response.body).to include("coach-step stage-shine", ">Step 2 of 3")
+      expect(response.body).not_to include("data-testid=\"editor-unlocked\"")
+
+      get problem_path(problem)
+      expect(response.body).not_to include("stage-shine")
+    end
+
+    it "announces the editor unlock after the approach is accepted" do
+      coaching_session(premium).update!(coaching_state: "approach")
+      use_ai_client(Ai::FakeClient.new(reply: { message: "Correct.", advance: true }.to_json))
+
+      tell_coach("Use a hash set.")
+      follow_redirect!
+
+      expect(response.body).to include("coach-step stage-shine", "data-testid=\"editor-unlocked\"", "editor-just-unlocked")
+    end
+
+    it "does not flag a stage when the final stage cannot advance" do
+      coaching_session(premium).update!(coaching_state: "complexity")
+      use_ai_client(Ai::FakeClient.new(reply: { message: "O(n).", advance: true }.to_json))
+
+      tell_coach("It is O(n) time.")
+
+      expect(flash[:coaching_stage_passed]).to be_nil
+    end
+
+    it "keeps the stage-passed key out of the page banners" do
+      use_ai_client(Ai::FakeClient.new(reply: { message: "Right.", advance: true }.to_json))
+
+      tell_coach("Return true if any number repeats.")
+      follow_redirect!
+
+      expect(response.body).not_to include("notice coaching_stage_passed")
+    end
+  end
+
+  describe "chat page" do
+    before { sign_in(premium) }
+
+    it "marks the chat log as scrollable and the form as a chat form" do
+      get problem_path(problem)
+
+      expect(response.body).to include("data-chat-log", "data-chat-form", "Senior SWE is thinking")
+    end
+  end
+
+  describe "when no OpenAI API key is configured" do
+    before { sign_in(premium) }
+
+    it "says the API key is missing" do
+      tell_coach("Return true if any number appears twice.")
+
+      expect(flash[:alert]).to include("Senior SWE is unavailable right now", "OPENAI_API_KEY")
     end
   end
 

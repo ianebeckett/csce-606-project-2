@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Light test run for development: about 10 seconds.
+# Skips RSpec examples tagged :docker or :slow, and skips coverage.
+# CI still runs the full suite; run `bundle exec rspec` and
+# `bundle exec cucumber` yourself before merging.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+FAST=1 COVERAGE=0 exec bundle exec rspec --format progress "$@"

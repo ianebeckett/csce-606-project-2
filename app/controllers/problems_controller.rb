@@ -12,6 +12,16 @@ class ProblemsController < ApplicationController
     @due_reviews = current_user.review_schedules.due
                                .includes(:problem)
                                .order(:next_review_date)
+
+    @due_reviews_count = @due_reviews.count
+    @due_reviews = @due_reviews.limit(2)
+
+    # Get the student's upcoming reviews
+    @upcoming_reviews = current_user.review_schedules
+                                    .includes(:problem)
+                                    .where("next_review_date > ?", Date.current)
+                                    .order(:next_review_date)
+    @upcoming_reviews_preview = @upcoming_reviews.limit(2)
   end
 
   def show
@@ -23,7 +33,8 @@ class ProblemsController < ApplicationController
     requested = params[:language].presence || latest&.language || Attempt::LANGUAGE
     @language = Attempt::LANGUAGES.include?(requested) ? requested : Attempt::LANGUAGE
     previous = attempts.where(language: @language).order(created_at: :desc, id: :desc).first
-    code = previous&.code.presence || @problem.starter_code_for(@language)
+    # fresh=1 comes from Start over: ignore earlier code and show the starter code.
+    code = (previous&.code.presence unless params[:fresh].present?) || @problem.starter_code_for(@language)
     @attempt = Attempt.new(code: code, language: @language)
     @coaching_session = current_user.practice_sessions.for_today(@problem) if current_user.premium?
   end

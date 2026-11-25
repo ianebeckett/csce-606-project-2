@@ -1,7 +1,14 @@
 
 class ReviewSchedulesController < ApplicationController
   def index
-    # Get only the logged-in student's review schedules
+    # Get all upcoming reviews for the logged-in student
+    @upcoming_reviews = current_user.review_schedules
+                                    .where("next_review_date > ?", Date.current)
+                                    .includes(:problem)
+                                    .order(:next_review_date)
+  end
+
+  def due
     @due_reviews = current_user.review_schedules.due
                                .includes(:problem)
                                .order(:next_review_date)

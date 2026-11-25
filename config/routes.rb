@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   root "problems#index"
   # Display coding problems that are due for review
   get "reviews", to: "review_schedules#index", as: :reviews
+  get "due-reviews", to: "review_schedules#due", as: :due_reviews
 
   # Save a student's performance rating after practice
   patch "practice_sessions/:id/rate",
@@ -13,9 +14,13 @@ Rails.application.routes.draw do
 
   resource :session, only: [ :new, :create, :destroy ]
   resource :registration, only: [ :new, :create ]
-  resource :account, only: [ :show, :update ]
+  resource :account, only: [ :show, :update ] do
+    # User-study switch: open every topic regardless of prerequisites
+    patch :problem_access
+  end
   resources :problems, only: [ :index, :show ] do
     resources :attempts, only: :create
+    resource :restart, only: :create, controller: "problem_restarts"
     resources :coaching_messages, only: :create
     resource :interview, only: :show
     resources :interview_messages, only: :create

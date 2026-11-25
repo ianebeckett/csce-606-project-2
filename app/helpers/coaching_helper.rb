@@ -6,7 +6,18 @@ module CoachingHelper
     "skipped" => "The coach was unavailable, so the editor is unlocked. You can still send messages."
   }.freeze
 
+  # The stage that changes the editor from locked to unlocked once passed.
+  UNLOCKING_STAGE = "approach".freeze
+
   def coaching_step_hint(practice_session)
     STEP_HINTS.fetch(practice_session.coaching_state)
+  end
+
+  def coaching_stage_just_passed?
+    flash[:coaching_stage_passed].present?
+  end
+
+  def editor_just_unlocked?
+    flash[:coaching_stage_passed] == UNLOCKING_STAGE
   end
 end
