@@ -165,6 +165,38 @@ RSpec.describe "Practice Session Ratings", type: :request do
     expect(schedule.interval_days).to eq(original_interval)
   end
 
+  it "rejects a stale attempt without completing practice or scheduling a review" do
+    practice = rating_practice
+    older = practice.attempts.sole
+    practice.attempts.create!(code: "newer solution", language: "ruby", judge_result: Attempt::ACCEPTED)
+    post session_path, params: { email: rating_user.email, password: rating_password }
+    original = practice.reload.attributes
+
+    expect do
+      patch rate_practice_session_path(practice), params: { review_rating: 5, attempt_id: older.id }
+    end.not_to change(ReviewSchedule, :count)
+
+    expect(response).to redirect_to(problems_path)
+    expect(flash[:alert]).to eq("Only the latest attempt can be rated.")
+    expect(practice.reload.attributes).to eq(original)
+  end
+
+  it "rejects an unfinished attempt without completing practice or scheduling a review" do
+    practice = rating_practice
+    attempt = practice.attempts.sole
+    attempt.update!(judge_result: Attempt::PENDING)
+    post session_path, params: { email: rating_user.email, password: rating_password }
+    original = practice.reload.attributes
+
+    expect do
+      patch rate_practice_session_path(practice), params: { review_rating: 5, attempt_id: attempt.id }
+    end.not_to change(ReviewSchedule, :count)
+
+    expect(response).to redirect_to(problems_path)
+    expect(flash[:alert]).to eq("Complete a coding attempt first.")
+    expect(practice.reload.attributes).to eq(original)
+  end
+
 
   it "uses the latest attempt rating for review scheduling" do
     practice = rating_practice

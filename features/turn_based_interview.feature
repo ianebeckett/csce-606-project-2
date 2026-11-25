@@ -46,10 +46,9 @@ Feature: Turn-based interview
     When I start the interview for "Contains Duplicate"
     Then I see "The interviewer is a Premium feature."
 
-  @real_ai
-  Scenario: The real AI answers a clarifying question
+  Scenario: An AI service response is saved as a clarifying answer
     Given I am signed in as a "Premium" member
-    And the interviewer is the real AI
+    And the AI service returns a clarifying answer
     When I start the interview for "Contains Duplicate"
     And I ask the interviewer "How big can the list be?"
     Then the interviewer replied

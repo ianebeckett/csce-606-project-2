@@ -30,6 +30,7 @@ Feature: US7 — Online Judge & Error Recovery
 
   Scenario Outline: Choose another supported language without JavaScript
     Given I am signed in as a "Free" member
+    And the judge accepts the submitted language solution
     When I submit a correct "<language>" solution for "contains-duplicate"
     Then I first see a "Pending" result
     When judging finishes
@@ -41,8 +42,24 @@ Feature: US7 — Online Judge & Error Recovery
       | go       | Go 1.27.3          |
       | cpp      | C++23 (GCC 16.2.0) |
 
+  Scenario Outline: Record linked-list results from the executor
+    Given I am signed in as a "Free" member
+    And I have completed the prerequisites for "reverse-linked-list"
+    And the executor returns the predefined case results
+    When I submit a correct "<language>" solution for "reverse-linked-list"
+    Then I first see a "Pending" result
+    When judging finishes
+    Then I see an "Accepted" result with every predefined case passed
+    And my submitted code is preserved in my personal history
+    Examples:
+      | language |
+      | python   |
+      | go       |
+      | cpp      |
+
   Scenario Outline: Show a concise compilation error
     Given I am signed in as a "Free" member
+    And the judge reports a compilation error
     When I submit invalid "<language>" syntax
     Then I first see a "Pending" result
     When judging finishes
@@ -81,7 +98,39 @@ Feature: US7 — Online Judge & Error Recovery
       | invalid syntax | Compilation Error |
       | an exception   | Runtime Error     |
       | an abrupt exit | Runtime Error     |
-      | an endless loop| Timeout           |
+
+  Scenario: Preserve my code when judging times out
+    Given I am signed in as a "Free" member
+    And the judge reports a timeout
+    When I submit a Ruby solution with "an endless loop"
+    Then I first see a "Pending" result
+    When judging finishes
+    Then I see the "Timeout" verdict and a passed-case count
+    And I can still open the problem and read my submitted code
+
+  Scenario Outline: Preserve partial progress when execution fails
+    Given I am signed in as a "Free" member
+    And the executor fails after one case with "<failure>"
+    When I submit a correct Ruby solution for "contains-duplicate"
+    Then I first see a "Pending" result
+    When judging finishes
+    Then I see the "Runtime Error" verdict and a passed-case count
+    And the earlier passed case and my source code are preserved
+    Examples:
+      | failure          |
+      | malformed output |
+      | a runtime error  |
+      | excessive output |
+
+  Scenario: Keep my code when the judging job fails unexpectedly
+    Given I am signed in as a "Free" member
+    And the judging job fails unexpectedly
+    When I submit a correct Ruby solution for "contains-duplicate"
+    Then I first see a "Pending" result
+    When judging finishes
+    Then I see the "Judge Unavailable" verdict and a passed-case count
+    And the job failure is reported without exposing its details
+    And I can still open the problem and read my submitted code
 
   Scenario: Keep same-day retries together and start a new session after midnight
     Given I am signed in as a "Free" member

@@ -129,8 +129,8 @@ bin/judge-build
 docker compose up -d --wait db
 RAILS_ENV=test bin/rails db:prepare
 export COVERAGE_ROOT="$(mktemp -d)"
-bundle exec rspec
-bundle exec cucumber --no-profile --strict
+JUDGE_INTEGRATION=1 bundle exec rspec
+JUDGE_INTEGRATION=1 bundle exec cucumber --no-profile --strict
 bin/rails test
 bundle exec ruby test_support/merge_coverage.rb
 bin/rubocop --fail-level info
@@ -139,6 +139,15 @@ bin/rubocop --fail-level info
 CI runs these application suites and requires separate RSpec, Cucumber, and
 combined Ruby line coverage of at least 90%, plus zero RuboCop offenses.
 Feature owners must add meaningful tests for their acceptance criteria.
+
+For normal development, `bundle exec rspec` excludes the expensive compiler
+integration tests. `bundle exec cucumber --no-profile --strict` runs the real
+executor with scripted compiler/process results for language-selection scenarios;
+both commands measure Ruby coverage. Use `COVERAGE=0` for focused runs that do not
+measure suite-wide coverage. Run the compiler specs separately with
+`COVERAGE=0 JUDGE_INTEGRATION=1 bundle exec rspec spec/integration`.
+The full validation commands above and CI include real language judging with
+coverage enabled. A mocked acceptance run is not full coverage evidence.
 
 See [Quality checks and Definition of Done](docs/quality.md) for report
 locations, test authoring, CI activation, and the evidence requiring human review.

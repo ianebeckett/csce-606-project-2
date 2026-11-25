@@ -2,9 +2,46 @@
 require "rails_helper"
 
 RSpec.describe "Review Schedules", type: :request do
+  include ActiveSupport::Testing::TimeHelpers
+
   it "requires a user to be logged in" do
     get reviews_path
     expect(response).to redirect_to(new_session_path)
+    get due_reviews_path
+    expect(response).to redirect_to(new_session_path)
+  end
+
+  it "shows only the member's overdue and due-today reviews in date order" do
+    freeze_time do
+      user = create_user
+      other = create_user(email: "other-due-review@example.com")
+      problems = Problem.order(:id).limit(4).to_a
+      user.review_schedules.create!(problem: problems[0], next_review_date: Date.tomorrow, interval_days: 1)
+      user.review_schedules.create!(problem: problems[1], next_review_date: Date.current, interval_days: 1)
+      user.review_schedules.create!(problem: problems[2], next_review_date: Date.yesterday, interval_days: 1)
+      other.review_schedules.create!(problem: problems[3], next_review_date: Date.yesterday, interval_days: 1)
+      sign_in(user)
+
+      get due_reviews_path
+
+      expect(response).to have_http_status(:ok)
+      rows = Nokogiri::HTML(response.body).css("tbody tr")
+      expect(rows.map { |row| row.at_css("td").text.strip }).to eq([ problems[2].title, problems[1].title ])
+      expect(rows.map { |row| row.css("td")[2].text.strip }).to eq(
+        [ Date.yesterday, Date.current ].map { |date| date.strftime("%b %d, %Y") })
+      expect(rows.map { |row| row.at_css(".due-review-action")["href"] }).to eq(
+        [ problem_path(problems[2]), problem_path(problems[1]) ])
+    end
+  end
+
+  it "shows an empty state when the member has no due reviews" do
+    sign_in(create_user)
+
+    get due_reviews_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("No problems are due for review. Great job!")
+    expect(Nokogiri::HTML(response.body).css("tbody tr")).to be_empty
   end
 
   it "shows a message when the student has no upcoming reviews" do

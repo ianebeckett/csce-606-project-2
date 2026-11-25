@@ -39,7 +39,6 @@ jobs:
       COVERAGE_ROOT: coverage/ci-${{ github.run_id }}-${{ github.run_attempt }}
       CUCUMBER_PUBLISH_ENABLED: "false"
       RUBOCOP_CACHE_ROOT: tmp/rubocop
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -51,11 +50,11 @@ jobs:
         run: bin/judge-build
       - name: Prepare test database
         run: bin/rails db:prepare
-      - name: Run RSpec and require at least 90% unit coverage
-        run: bundle exec rspec
+      - name: Run RSpec including compiler integration and require at least 90% unit coverage
+        run: JUDGE_INTEGRATION=1 bundle exec rspec
       - name: Run Cucumber and require at least 90% acceptance coverage
         if: ${{ !cancelled() }}
-        run: bundle exec cucumber --no-profile --strict
+        run: JUDGE_INTEGRATION=1 bundle exec cucumber --no-profile --strict
       - name: Run retained Minitest tests
         if: ${{ !cancelled() }}
         run: bin/rails test
