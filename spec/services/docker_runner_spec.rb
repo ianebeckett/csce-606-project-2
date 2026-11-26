@@ -52,15 +52,15 @@ RSpec.describe Judge::DockerRunner do
     end
   end
 
-  it "distinguishes submission exits from Docker startup failures", :docker do
-    [ "exit(1)", "exit!(1)", "exit!(125)", "exit!(126)", "exit!(127)", "at_exit { exit 3 }; true" ].each do |expression|
+  [ "exit(1)", "exit!(1)", "exit!(125)", "exit!(126)", "exit!(127)", "at_exit { exit 3 }; true" ].each do |expression|
+    it "classifies submission #{expression.inspect} as a runtime failure", :docker do
       result = described_class.new.call(code: "def contains_duplicate(nums); #{expression}; end",
         language: "ruby", problem: problem, inputs: [ { "args" => [ [ 1 ] ] } ])
-      aggregate_failures(expression) do
-        expect(result.fetch("status")).to eq("Runtime Error")
-      end
+      expect(result.fetch("status")).to eq("Runtime Error")
     end
+  end
 
+  it "reports an unavailable Docker image", :docker do
     result = described_class.new(image: "codecoach-missing:#{SecureRandom.uuid}").call(
       code: "def contains_duplicate(nums); false; end", language: "ruby", problem: problem,
       inputs: [ { "args" => [ [ 1 ] ] } ])
@@ -115,10 +115,23 @@ RSpec.describe Judge::DockerRunner do
     })
   end
 
-  it "terminates CPU-bound Ruby submissions at the wall-clock deadline", :docker do
-    cpu = described_class.new.call(code: "def contains_duplicate(nums); loop {}; end", language: "ruby",
+  it "reports a command timeout and removes its container" do
+    run_name = nil
+    expect(command).to receive(:call) do |arguments, input:, timeout:|
+      run_name = arguments[arguments.index("--name") + 1]
+      expect(JSON.parse(input).fetch("code")).to include("loop {}")
+      expect(timeout).to eq(24)
+      Judge::Command::Result.new("", "", nil, true, false)
+    end
+    expect(command).to receive(:call) do |arguments, timeout:|
+      expect(arguments).to eq([ "docker", "rm", "--force", run_name ])
+      expect(timeout).to eq(3)
+      Judge::Command::Result.new("", "", 0, false, false)
+    end
+
+    result = described_class.new(command: command).call(code: "def contains_duplicate(nums); loop {}; end", language: "ruby",
       problem: problem, inputs: [ { "args" => [ [ 1 ] ] } ])
-    expect(cpu.fetch("status")).to eq("Timeout")
+    expect(result).to eq("status" => "Timeout", "outputs" => [])
   end
 
   it "stops a container at its own wall-clock deadline", :slow do
@@ -155,51 +168,28 @@ RSpec.describe Judge::DockerRunner do
     expect(cyclic.fetch("status")).to eq("Runtime Error")
   end
 
-  it "executes the fixed Python, Go, and C++ versions", :docker do
-    inputs = problem.test_cases.order(:position).map(&:input)
+  %w[python go cpp].each do |language|
+    %w[contains-duplicate reverse-linked-list].each do |slug|
+      it "passes #{language} #{slug} to the executor and returns its results" do
+        problem = Problem.find_by!(slug: slug)
+        cases = problem.test_cases.order(:position)
+        inputs = cases.map(&:input)
+        code = LanguageSolutions::CORRECT.fetch(language).fetch(slug)
+        response = { "status" => "ok", "outputs" => cases.map(&:expected_output),
+                     "runtime" => Attempt.language_version(language) }
+        expect(command).to receive(:call) do |arguments, input:, timeout:|
+          expect(arguments.first(2)).to eq([ "docker", "run" ])
+          expect(JSON.parse(input)).to include(
+            "code" => code, "language" => language, "inputs" => inputs,
+            "method_name" => problem.method_name, "input_kind" => problem.input_kind,
+            "runtime" => Attempt.language_version(language))
+          Judge::Command::Result.new(JSON.generate(response), "", 0, false, false)
+        end
+        expect(command).to receive(:call).with(
+          [ "docker", "rm", "--force", start_with("codecoach-judge-") ], timeout: 3)
 
-    %w[python go cpp].each do |language|
-      result = described_class.new.call(
-        code: LanguageSolutions::CORRECT.fetch(language).fetch(problem.slug), language: language,
-        problem: problem, inputs: inputs)
-      aggregate_failures(language) do
-        expect(result.fetch("status")).to eq("ok")
-        expect(result.fetch("outputs")).to eq(problem.test_cases.order(:position).map(&:expected_output))
-      end
-    end
-  end
-
-  it "provides ListNode to Python, Go, and C++ submissions", :docker do
-    linked = Problem.find_by!(slug: "reverse-linked-list")
-    inputs = linked.test_cases.order(:position).map(&:input)
-
-    %w[python go cpp].each do |language|
-      result = described_class.new.call(
-        code: LanguageSolutions::CORRECT.fetch(language).fetch(linked.slug), language: language,
-        problem: linked, inputs: inputs)
-      aggregate_failures(language) do
-        expect(result.fetch("status")).to eq("ok")
-        expect(result.fetch("outputs")).to eq(linked.test_cases.order(:position).map(&:expected_output))
-      end
-    end
-  end
-
-  it "classifies runtime failures and timeouts in Python, Go, and C++", :docker do
-    input = [ problem.test_cases.first.input ]
-
-    %w[python go cpp].each do |language|
-      runtime_error = described_class.new.call(
-        code: LanguageSolutions::RUNTIME_ERROR.fetch(language), language: language,
-        problem: problem, inputs: input)
-      timeout = described_class.new.call(
-        code: LanguageSolutions::TIMEOUT.fetch(language), language: language,
-        problem: problem, inputs: input)
-
-      aggregate_failures(language) do
-        expect(runtime_error.fetch("status")).to eq("Runtime Error")
-        expect(runtime_error.fetch("outputs")).to be_empty
-        expect(timeout.fetch("status")).to eq("Timeout")
-        expect(timeout.fetch("outputs")).to be_empty
+        expect(described_class.new(command: command).call(
+          code: code, language: language, problem: problem, inputs: inputs)).to eq(response)
       end
     end
   end

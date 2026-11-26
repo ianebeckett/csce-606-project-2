@@ -18,6 +18,7 @@ RSpec.configure do |config|
   # FAST=1 (bin/test-fast) skips examples tagged :docker (they start real
   # containers) or :slow (real waits or network calls). CI runs everything.
   config.filter_run_excluding docker: true, slow: true if ENV["FAST"]
+  config.filter_run_excluding integration: true unless ENV["JUDGE_INTEGRATION"] == "1"
   # Seed the problems once per run. Each example runs in a transaction that
   # is rolled back, so seed_judge inside an example only has to confirm the
   # rows exist, which is several times faster than inserting them.

@@ -44,12 +44,15 @@ bin/judge-build
 docker compose up -d --wait db
 RAILS_ENV=test bin/rails db:prepare
 export COVERAGE_ROOT="$(mktemp -d)"
-bundle exec rspec
-bundle exec cucumber --no-profile --strict
+JUDGE_INTEGRATION=1 bundle exec rspec
+JUDGE_INTEGRATION=1 bundle exec cucumber --no-profile --strict
 bin/rails test
 bundle exec ruby test_support/merge_coverage.rb
 bin/rubocop --fail-level info
 ```
 
-CI requires at least 90% line coverage and zero RuboCop offenses. See
-[quality checks](docs/quality.md) for coverage reports and test guidelines.
+CI requires separate RSpec, Cucumber, and combined line coverage of at least
+90%, plus zero RuboCop offenses. Ordinary RSpec runs skip compiler integration;
+ordinary Cucumber language scenarios use scripted process results. The full
+commands above include real judging. See [quality checks](docs/quality.md) for
+focused test commands, coverage reports, and test guidelines.

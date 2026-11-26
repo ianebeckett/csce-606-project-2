@@ -69,6 +69,72 @@ end
 
 Then("the submission shows {string}") { |version| expect(page).to have_content(version) }
 
+Given("the judge accepts the submitted language solution") do
+  # Full acceptance validation also exercises the real language boundary.
+  next if ENV["JUDGE_INTEGRATION"] == "1"
+
+  use_scripted_executor do |problem|
+    problem.test_cases.order(:position).map do |test_case|
+      executor_result(stdout: JSON.generate(test_case.expected_output))
+    end
+  end
+end
+
+Given("the judge reports a timeout") do
+  use_scripted_executor do
+    [ executor_result(exit_status: nil, timed_out: true) ]
+  end
+end
+
+Given("the executor returns the predefined case results") do
+  # Real linked-list compilation remains in spec/integration, including in CI.
+  use_scripted_executor do |problem|
+    problem.test_cases.order(:position).map do |test_case|
+      executor_result(stdout: JSON.generate(test_case.expected_output))
+    end
+  end
+end
+
+Given("the judge reports a compilation error") do
+  next if ENV["JUDGE_INTEGRATION"] == "1"
+
+  use_scripted_executor(compilation: executor_result(stderr: "syntax error: private compiler output", exit_status: 1))
+end
+
+Given("the executor fails after one case with {string}") do |failure|
+  failed_result = {
+    "malformed output" => executor_result(stdout: "not json"),
+    "a runtime error" => executor_result(stderr: "private stack trace", exit_status: 1),
+    "excessive output" => executor_result(stdout: "truncated output", output_limited: true)
+  }.fetch(failure)
+  use_scripted_executor do |problem|
+    [ executor_result(stdout: JSON.generate(problem.test_cases.order(:position).first.expected_output)), failed_result ]
+  end
+end
+
+Then("the earlier passed case and my source code are preserved") do
+  expect(@attempt.reload.passed_cases).to eq(1)
+  expect(@attempt.total_cases).to eq(@problem.test_cases.count)
+  expect(@attempt.code.gsub(/\r\n?/, "\n")).to eq(@submitted_code)
+  expect(page).to have_content("1 / #{@attempt.total_cases} test cases passed")
+  expect(page.find(".saved-code").native.text.gsub(/\r\n?/, "\n")).to eq(@submitted_code)
+  expect(page).not_to have_content("private stack trace")
+end
+
+Given("the judging job fails unexpectedly") do
+  submission = instance_double(Judge::Submission)
+  error = Delayed::WorkerTimeout.new("private worker failure")
+  allow(Judge::Submission).to receive(:new).and_return(submission)
+  expect(submission).to receive(:call).and_raise(error)
+  expect(Rails.error).to receive(:report).with(error)
+end
+
+Then("the job failure is reported without exposing its details") do
+  expect(@attempt.reload.error_message).to eq(Judge::DockerRunner::UNAVAILABLE_MESSAGE)
+  expect(page).to have_content(Judge::DockerRunner::UNAVAILABLE_MESSAGE)
+  expect(page).not_to have_content("private worker failure")
+end
+
 When("I submit invalid {string} syntax") do |language|
   @problem = Problem.find_by!(slug: "contains-duplicate")
   @submitted_code = LanguageSolutions::INVALID.fetch(language)
