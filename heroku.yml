@@ -10,20 +10,12 @@ build:
     queue:
       dockerfile: Dockerfile
       target: heroku-queue
+    judge: judge/Dockerfile
 
 release:
   image: release
   command:
-    - ./bin/rails
-    - db:migrate
-    - db:seed
+    - ./bin/rails db:migrate db:seed
 
-run:
-  web: bundle exec puma -C config/puma.rb
-  worker:
-    command:
-      - bundle
-      - exec
-      - rake
-      - jobs:work
-    image: queue
+# Omit run so each image's CMD applies. In particular, the queue image must
+# launch bin/judge-worker to start the ready pool before processing jobs.

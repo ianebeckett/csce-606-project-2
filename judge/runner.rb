@@ -150,7 +150,7 @@ class Submission
     when "python" then [ "python3", "-m", "py_compile", files.fetch(:source) ]
     when "go"
       [
-        { "GOCACHE" => File.join(directory, "go-cache"), "GOMAXPROCS" => "1", "HOME" => directory },
+        { "GOCACHE" => ENV.fetch("JUDGE_GO_CACHE", File.join(directory, "go-cache")), "GOMAXPROCS" => "1", "HOME" => directory },
         "go", "build", "-p=1", "-o", files.fetch(:binary), files.fetch(:source)
       ]
     when "cpp"

@@ -15,10 +15,9 @@ RSpec.describe "Coaching messages", type: :request do
     post problem_coaching_messages_path(problem), params: { conversation_message: { content: text } }
   end
 
-  describe "when the AI service fails", :slow do
-    # A real request with a key OpenAI rejects, so the failure is genuine.
+  describe "when the AI service fails" do
     before do
-      use_ai_client(Ai::OpenAiClient.new(api_key: "sk-invalid-key-for-testing"))
+      use_ai_client(Ai::FakeClient.new(error: Ai::Error.new("OpenAI returned 401: Invalid API key")))
       sign_in(premium)
       tell_coach("Return true if any number appears twice.")
     end
