@@ -42,6 +42,30 @@ Feature: US2 — Spaced Repetition
     And I select the upcoming reviews "View All" link
     Then I see all three upcoming reviews in date order
 
+  Scenario: A learner cannot submit an invalid review rating
+    Given I am signed in as a "Free" member
+    And I have an accepted practice attempt
+    When I submit a review rating of 6
+    Then I am told to select a valid rating
+    And my practice session remains incomplete
+
+  Scenario: A learner cannot rate an older attempt
+    Given I am signed in as a "Free" member
+    And I have an older and a latest accepted attempt
+    When I submit a review rating for the older attempt
+    Then I am told only the latest attempt can be rated
+
+  Scenario: A learner cannot rate an incomplete attempt
+    Given I am signed in as a "Free" member
+    And I have a pending practice attempt
+    When I submit a review rating of 3
+    Then I am told to complete a coding attempt first
+
+  Scenario: A learner cannot rate the same attempt twice
+    Given I am signed in as a "Free" member
+    And I have already rated an accepted practice attempt
+    When I submit another review rating of 5
+    Then I am told the attempt has already been rated
   Scenario Outline: Adjust an existing review interval after completed practice
     Given I am signed in as a "Free" member
     And I have a completed coding attempt with a 4-day review interval
