@@ -10,8 +10,15 @@ class AttemptsController < ApplicationController
 
   def show
     @attempt = current_user.attempts.includes(practice_session: :problem).find(params[:id])
-    # Polled by the submission page while judging, so it can update itself.
-    return render(json: { judge_result: @attempt.judge_result, pending: @attempt.judge_result == Attempt::PENDING }) if request.format.json?
+
+    # Allow the submission page to poll for judge updates
+    return render(json: {
+      judge_result: @attempt.judge_result,
+      pending: @attempt.judge_result == Attempt::PENDING
+    }) if request.format.json?
+
+    # Load saved AI feedback for the completed practice session
+    @feedback = parse_session_feedback(@attempt.practice_session.feedback_summary)
 
     if @attempt.judge_result == Attempt::PENDING && !@attempt.judging_started_at
       @queue_wait = Judge::Queue.new.wait_for(@attempt)
@@ -45,6 +52,16 @@ class AttemptsController < ApplicationController
   end
 
   private
+
+  # Convert saved feedback JSON into data the view can display.
+  def parse_session_feedback(summary)
+    return nil if summary.blank?
+
+    JSON.parse(summary)
+  rescue JSON::ParserError => error
+    Rails.logger.error("Invalid session feedback JSON: #{error.message}")
+    nil
+  end
 
   # Checked on the server so a hidden editor can't be bypassed with a direct POST.
   def coaching_locked?

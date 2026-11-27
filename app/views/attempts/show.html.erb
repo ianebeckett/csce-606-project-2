@@ -31,6 +31,73 @@
 </div>
 
 
+<% if @feedback.present? %>
+  <section class="session-feedback">
+    <p class="eyebrow">POST-SESSION FEEDBACK</p>
+    <h2>Your Coaching Feedback</h2>
+
+    <p><%= @feedback["summary"] %></p>
+
+
+
+    <div class="feedback-section">
+      <h3>Conceptual Accuracy</h3>
+      <ul>
+        <li><%= @feedback.dig("conceptual_accuracy", "assessment") %></li>
+      </ul>
+
+      <h4>Strengths</h4>
+      <ul>
+        <% Array(@feedback.dig("conceptual_accuracy", "strengths")).each do |strength| %>
+          <li><%= strength %></li>
+        <% end %>
+      </ul>
+
+      <% if @feedback.dig("conceptual_accuracy", "weaknesses").present? %>
+        <h4>Areas for Improvement</h4>
+        <ul>
+          <% @feedback.dig("conceptual_accuracy", "weaknesses").each do |weakness| %>
+            <li><%= weakness %></li>
+          <% end %>
+        </ul>
+      <% end %>
+    </div>
+
+    <div class="feedback-section">
+      <h3>Explanation Quality</h3>
+      <ul>
+        <li><%= @feedback.dig("explanation_quality", "assessment") %></li>
+      </ul>
+
+      <h4>Strengths</h4>
+      <ul>
+        <% Array(@feedback.dig("explanation_quality", "strengths")).each do |strength| %>
+          <li><%= strength %></li>
+        <% end %>
+      </ul>
+
+      <% if @feedback.dig("explanation_quality", "weaknesses").present? %>
+        <h4>Areas for Improvement</h4>
+        <ul>
+          <% @feedback.dig("explanation_quality", "weaknesses").each do |weakness| %>
+            <li><%= weakness %></li>
+          <% end %>
+        </ul>
+      <% end %>
+    </div>
+
+
+    <div class="feedback-section">
+      <h3>Actionable Tips</h3>
+      <ul>
+        <% @feedback["actionable_tips"].each do |tip| %>
+          <li><%= tip %></li>
+        <% end %>
+      </ul>
+    </div>
+  </section>
+<% end %>
+
 
 <% practice = @attempt.practice_session %>
 

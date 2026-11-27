@@ -36,7 +36,7 @@ RSpec.describe "Practice Session Ratings", type: :request do
           params: { review_rating: "1", attempt_id: attempt.id }
 
 
-    expect(response).to redirect_to(problems_path)
+    expect(response).to redirect_to(attempt_path(attempt))
 
     # Verify the rating and completion were saved
     practice.reload
@@ -65,6 +65,173 @@ RSpec.describe "Practice Session Ratings", type: :request do
       expect(due_reviews).not_to be_nil
       expect(due_reviews.text).to include(problem.title)
     end
+  end
+
+  # No AI feedback when membership is downgraded to free
+  it "does not generate AI feedback when a Premium member downgrades to Free" do
+    user = User.create!(
+      email: "rating-downgrade@example.com",
+      password: "password12345",
+      role: "Premium"
+    )
+
+    problem = Problem.find_by!(slug: "contains-duplicate")
+
+    practice = user.practice_sessions.create!(
+      problem: problem,
+      started_at: Time.current
+    )
+
+    attempt = practice.attempts.create!(
+      code: "puts 1",
+      language: "ruby",
+      judge_result: Attempt::ACCEPTED
+    )
+
+    # Log in while the user is a Premium member.
+    post session_path, params: {
+      email: user.email,
+      password: "password12345"
+    }
+
+    expect(user.reload.premium?).to be true
+
+    # Downgrade before submitting the performance rating.
+    user.change_role!("Free")
+
+    expect(user.reload.premium?).to be false
+
+    # AI feedback must not be generated after the downgrade.
+    expect(Coaching::SessionFeedback).not_to receive(:new)
+
+    patch rate_practice_session_path(practice),
+          params: {
+            review_rating: 4,
+            attempt_id: attempt.id
+          }
+
+    expect(response).to redirect_to(attempt_path(attempt))
+
+    # Practice completion and review scheduling must still work.
+    expect(practice.reload.status).to eq("completed")
+    expect(practice.feedback_summary).to be_blank
+    expect(practice.review_rating).to eq(4)
+    expect(practice.review_scheduled_at).not_to be_nil
+
+    expect(
+      ReviewSchedule.exists?(user: user, problem: problem)
+    ).to be true
+  end
+
+  # Premium members get AI feedback
+  it "generates AI feedback for Premium members" do
+    user = User.create!(
+      email: "rating-premium@example.com",
+      password: "password12345",
+      role: "Premium"
+    )
+
+    problem = Problem.find_by!(slug: "contains-duplicate")
+
+    practice = user.practice_sessions.create!(
+      problem: problem,
+      started_at: Time.current
+    )
+
+    attempt = practice.attempts.create!(
+      code: "puts 1",
+      language: "ruby",
+      judge_result: Attempt::ACCEPTED
+    )
+
+    post session_path, params: {
+      email: user.email,
+      password: "password12345"
+    }
+
+    feedback = {
+      "summary" => "Good understanding of the problem.",
+      "conceptual_accuracy" => {
+        "assessment" => "Strong",
+        "strengths" => [ "Correct reasoning" ],
+        "weaknesses" => []
+      },
+      "explanation_quality" => {
+        "assessment" => "Good",
+        "strengths" => [ "Clear explanation" ],
+        "weaknesses" => []
+      },
+      "actionable_tips" => [ "Consider edge cases." ]
+    }
+
+    feedback_service = instance_double(Coaching::SessionFeedback)
+
+    expect(Coaching::SessionFeedback)
+      .to receive(:new)
+            .with(client: anything)
+            .and_return(feedback_service)
+
+    expect(feedback_service)
+      .to receive(:call)
+            .with(practice)
+            .and_return(feedback)
+
+    patch rate_practice_session_path(practice),
+          params: {
+            review_rating: 4,
+            attempt_id: attempt.id
+          }
+
+    expect(response).to redirect_to(attempt_path(attempt))
+    expect(practice.reload.status).to eq("completed")
+    expect(JSON.parse(practice.feedback_summary)).to eq(feedback)
+  end
+
+  # Free members do not get AI feedback
+  it "does not generate AI feedback for Free members" do
+    user = User.create!(
+      email: "rating-free@example.com",
+      password: "password12345",
+      role: "Free"
+    )
+
+    problem = Problem.find_by!(slug: "contains-duplicate")
+
+    practice = user.practice_sessions.create!(
+      problem: problem,
+      started_at: Time.current
+    )
+
+    attempt = practice.attempts.create!(
+      code: "puts 1",
+      language: "ruby",
+      judge_result: Attempt::ACCEPTED
+    )
+
+    post session_path, params: {
+      email: user.email,
+      password: "password12345"
+    }
+
+    # Free members must not invoke the AI feedback service.
+    expect(Coaching::SessionFeedback).not_to receive(:new)
+
+    patch rate_practice_session_path(practice),
+          params: {
+            review_rating: 4,
+            attempt_id: attempt.id
+          }
+
+    expect(response).to redirect_to(attempt_path(attempt))
+
+    # Practice completion and review scheduling still work.
+    expect(practice.reload.status).to eq("completed")
+    expect(practice.review_rating).to eq(4)
+    expect(practice.feedback_summary).to be_blank
+
+    expect(
+      ReviewSchedule.exists?(user: user, problem: problem)
+    ).to be true
   end
 
   # Shared test data for the security tests
@@ -240,7 +407,6 @@ RSpec.describe "Practice Session Ratings", type: :request do
     ).count).to eq(1)
 
     get attempt_path(second_attempt)
-    expect(response.body).not_to include("How well did you understand this problem?"
-                                 )
+    expect(response.body).not_to include("How well did you understand this problem?")
   end
 end

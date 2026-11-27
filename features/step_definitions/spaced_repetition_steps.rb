@@ -70,7 +70,6 @@ Then("I see the two soonest upcoming reviews on the dashboard") do
     @upcoming_reviews.first(2).each do |review|
       expect(page).to have_content(review.problem.title)
     end
-
     expect(page).not_to have_content(@upcoming_reviews.last.problem.title)
   end
 end
@@ -102,6 +101,82 @@ Then("I see all three upcoming reviews in date order") do
   expect(positions).to eq(positions.sort)
 end
 
+
+Given("I have an accepted practice attempt") do
+  @practice = @user.practice_sessions.create!(
+    problem: Problem.find_by!(slug: "contains-duplicate"),
+    started_at: Time.current
+  )
+  @attempt = @practice.attempts.create!(
+    code: "puts 1",
+    language: "ruby",
+    judge_result: Attempt::ACCEPTED
+  )
+end
+
+Given("I have an older and a latest accepted attempt") do
+  step("I have an accepted practice attempt")
+  travel 1.minute
+  @latest_attempt = @practice.attempts.create!(
+    code: "puts 2",
+    language: "ruby",
+    judge_result: Attempt::ACCEPTED
+  )
+end
+
+Given("I have a pending practice attempt") do
+  step("I have an accepted practice attempt")
+  @attempt.update!(judge_result: Attempt::PENDING)
+end
+
+Given("I have already rated an accepted practice attempt") do
+  step("I have an accepted practice attempt")
+  @practice.update!(review_scheduled_at: Time.current)
+end
+
+When("I submit a review rating of {int}") do |rating|
+  page.driver.submit(
+    :patch,
+    rate_practice_session_path(@practice),
+    { review_rating: rating, attempt_id: @attempt.id }
+  )
+end
+
+When("I submit a review rating for the older attempt") do
+  page.driver.submit(
+    :patch,
+    rate_practice_session_path(@practice),
+    { review_rating: 3, attempt_id: @attempt.id }
+  )
+end
+
+When("I submit another review rating of {int}") do |rating|
+  page.driver.submit(
+    :patch,
+    rate_practice_session_path(@practice),
+    { review_rating: rating, attempt_id: @attempt.id }
+  )
+end
+
+Then("I am told to select a valid rating") do
+  expect(page).to have_content("Select a rating from 1 to 5.")
+end
+
+Then("my practice session remains incomplete") do
+  expect(@practice.reload.status).to eq("in_progress")
+end
+
+Then("I am told only the latest attempt can be rated") do
+  expect(page).to have_content("Only the latest attempt can be rated.")
+end
+
+Then("I am told to complete a coding attempt first") do
+  expect(page).to have_content("Complete a coding attempt first.")
+end
+
+Then("I am told the attempt has already been rated") do
+  expect(page).to have_content("This attempt has already been rated.")
+end
 Given("I have a completed coding attempt with a {int}-day review interval") do |interval|
   travel_to(Time.current.change(usec: 0))
   problem = Problem.find_by!(slug: "contains-duplicate")

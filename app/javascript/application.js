@@ -82,7 +82,7 @@ document.addEventListener("submit", (event) => {
     field?.setAttribute("readonly", "")
     if (button) {
       button.disabled = true
-      button.value = "Thinking…"
+      button.value = "Thinking..."
     }
   })
 })
