@@ -29,6 +29,11 @@ databases. To enable AI features, run `OPENAI_API_KEY="your-key" make run`.
 See [configuration](docs/configuration.md) for database, AI, and Premium
 settings, and [troubleshooting](docs/troubleshooting.md) if setup fails.
 
+## Architecture and data model
+
+See the [application architecture](docs/architecture.md) for runtime components
+and data flow, and the [database ERD](docs/schema.md) for tables and relationships.
+
 ## Running tests
 
 For a quick (~10 second) run during development:
